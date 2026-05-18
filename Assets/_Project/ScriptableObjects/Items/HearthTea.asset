@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88af030f67884ce4849221bddbed970e, type: 3}
+  m_Name: HearthTea
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  id: hearth_tea
+  displayName: Hearth Tea
+  value: 3
+  icon: {fileID: -7252452825287700268, guid: 443da58efc224fa4c8fde3a882051d6e, type: 3}
