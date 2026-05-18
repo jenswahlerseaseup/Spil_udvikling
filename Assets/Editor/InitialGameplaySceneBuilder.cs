@@ -27,6 +27,16 @@ public static class InitialGameplaySceneBuilder
     private const string LootSpritePath = "Assets/_Project/Art/Sprites/placeholder_echo_shard.png";
     private const string ShopSpritePath = "Assets/_Project/Art/Sprites/placeholder_shopkeeper.png";
     private const string AttackSpritePath = "Assets/_Project/Art/Sprites/placeholder_attack_flash.png";
+    private const string FarmSpriteFolder = "Assets/_Project/Art/Sprites/Farm/";
+    private const string FarmCoopSpritePath = FarmSpriteFolder + "farm_coop.png";
+    private const string FarmFenceSpritePath = FarmSpriteFolder + "wood_fence_long.png";
+    private const string FarmHayBaleSpritePath = FarmSpriteFolder + "hay_bale.png";
+    private const string FarmMilkCanSpritePath = FarmSpriteFolder + "milk_can.png";
+    private const string FarmCrateSpritePath = FarmSpriteFolder + "wood_crate.png";
+    private const string FarmWheelbarrowSpritePath = FarmSpriteFolder + "wheelbarrow.png";
+    private const string FarmWhiteChickenSpritePath = FarmSpriteFolder + "white_chicken.png";
+    private const string FarmBrownChickenSpritePath = FarmSpriteFolder + "brown_chicken.png";
+    private const string FarmChickSpritePath = FarmSpriteFolder + "chick.png";
     private const string EchoShardPath = "Assets/_Project/ScriptableObjects/Items/EchoShard.asset";
     private const string HearthTeaPath = "Assets/_Project/ScriptableObjects/Items/HearthTea.asset";
     private const string LanternQuestPath = "Assets/_Project/ScriptableObjects/Quests/LanternErrand.asset";
@@ -80,6 +90,7 @@ public static class InitialGameplaySceneBuilder
         PrefabUtility.SaveAsPrefabAssetAndConnect(player, PlayerPrefabPath, InteractionMode.AutomatedAction);
         CreateCamera(player.transform);
         CreateCollisionDemo();
+        CreateFarmDecorations();
         CreateNpc();
         CreateShopkeeper();
         CreateEnemy();
@@ -320,13 +331,12 @@ public static class InitialGameplaySceneBuilder
         chicken.transform.position = position;
 
         var renderer = chicken.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(LootSpritePath);
-        renderer.color = new Color(1f, 0.92f, 0.68f);
+        renderer.sprite = LoadChickenSprite(name);
         renderer.sortingOrder = 16;
 
         var collider = chicken.AddComponent<CircleCollider2D>();
         collider.isTrigger = true;
-        collider.radius = 0.4f;
+        collider.radius = name.EndsWith("C") ? 0.28f : 0.42f;
 
         chicken.AddComponent<ChickenInteractable>();
         chicken.AddComponent<ChickenWander>();
@@ -339,15 +349,64 @@ public static class InitialGameplaySceneBuilder
         bucket.transform.position = position;
 
         var renderer = bucket.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ShopSpritePath);
-        renderer.color = new Color(0.72f, 0.66f, 0.82f);
+        renderer.sprite = LoadSpriteOrFallback(FarmMilkCanSpritePath, ShopSpritePath);
         renderer.sortingOrder = 14;
 
         var collider = bucket.AddComponent<BoxCollider2D>();
         collider.isTrigger = true;
-        collider.size = new Vector2(0.6f, 0.6f);
+        collider.size = new Vector2(0.45f, 0.65f);
 
         bucket.AddComponent<BucketInteractable>();
+    }
+
+    private static void CreateFarmDecorations()
+    {
+        var root = new GameObject("Farm Visual Dressing");
+
+        var coop = CreateDecorSprite(root.transform, "Chicken Coop", FarmCoopSpritePath, new Vector3(-1.45f, 2.35f, 0f), 8);
+        var coopCollider = coop.AddComponent<BoxCollider2D>();
+        coopCollider.size = new Vector2(2.1f, 0.95f);
+        coopCollider.offset = new Vector2(0.15f, 0.25f);
+        coop.layer = LayerMask.NameToLayer("Solid");
+
+        CreateDecorSprite(root.transform, "North Fence", FarmFenceSpritePath, new Vector3(-1.55f, 3.75f, 0f), 5);
+        CreateDecorSprite(root.transform, "Hay Bale", FarmHayBaleSpritePath, new Vector3(-3.85f, 1.95f, 0f), 9);
+        CreateDecorSprite(root.transform, "Wood Crate", FarmCrateSpritePath, new Vector3(3.55f, 0.95f, 0f), 9);
+        CreateDecorSprite(root.transform, "Wheelbarrow", FarmWheelbarrowSpritePath, new Vector3(3.15f, -2.55f, 0f), 9);
+    }
+
+    private static GameObject CreateDecorSprite(Transform parent, string name, string spritePath, Vector3 position, int sortingOrder)
+    {
+        var decor = new GameObject(name);
+        decor.transform.SetParent(parent);
+        decor.transform.position = position;
+
+        var renderer = decor.AddComponent<SpriteRenderer>();
+        renderer.sprite = LoadSpriteOrFallback(spritePath, FloorSpritePath);
+        renderer.sortingOrder = sortingOrder;
+
+        return decor;
+    }
+
+    private static Sprite LoadChickenSprite(string chickenName)
+    {
+        if (chickenName.EndsWith("B"))
+        {
+            return LoadSpriteOrFallback(FarmBrownChickenSpritePath, LootSpritePath);
+        }
+
+        if (chickenName.EndsWith("C"))
+        {
+            return LoadSpriteOrFallback(FarmChickSpritePath, LootSpritePath);
+        }
+
+        return LoadSpriteOrFallback(FarmWhiteChickenSpritePath, LootSpritePath);
+    }
+
+    private static Sprite LoadSpriteOrFallback(string spritePath, string fallbackPath)
+    {
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+        return sprite != null ? sprite : AssetDatabase.LoadAssetAtPath<Sprite>(fallbackPath);
     }
 
     private static void CreateShrine()
@@ -396,6 +455,7 @@ public static class InitialGameplaySceneBuilder
             "Assets/_Project/Art",
             "Assets/_Project/Art/Backgrounds",
             "Assets/_Project/Art/Sprites",
+            "Assets/_Project/Art/Sprites/Farm",
             "Assets/_Project/Audio",
             "Assets/_Project/Input",
             "Assets/_Project/Materials",
@@ -437,7 +497,21 @@ public static class InitialGameplaySceneBuilder
         CreateSpriteAsset(ShopSpritePath, 16, 24, new Color32(236, 136, 90, 255), new Color32(54, 38, 42, 255));
         CreateSpriteAsset(AttackSpritePath, 14, 6, new Color32(255, 245, 146, 210), new Color32(255, 185, 81, 230));
         ConfigureSpriteImporter(PlayfieldBackgroundPath, 128f);
+        ConfigureFarmSpriteImporters();
         ConfigureEmilSpriteImporters();
+    }
+
+    private static void ConfigureFarmSpriteImporters()
+    {
+        ConfigureSpriteImporter(FarmCoopSpritePath, 160f);
+        ConfigureSpriteImporter(FarmFenceSpritePath, 180f);
+        ConfigureSpriteImporter(FarmHayBaleSpritePath, 180f);
+        ConfigureSpriteImporter(FarmMilkCanSpritePath, 220f);
+        ConfigureSpriteImporter(FarmCrateSpritePath, 200f);
+        ConfigureSpriteImporter(FarmWheelbarrowSpritePath, 190f);
+        ConfigureSpriteImporter(FarmWhiteChickenSpritePath, 220f);
+        ConfigureSpriteImporter(FarmBrownChickenSpritePath, 220f);
+        ConfigureSpriteImporter(FarmChickSpritePath, 220f);
     }
 
     private static void EnsureGameplayData()
