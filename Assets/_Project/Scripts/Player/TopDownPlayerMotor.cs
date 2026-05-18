@@ -42,7 +42,16 @@ public sealed class TopDownPlayerMotor : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!GameManager.CanPlayerAct)
+        {
+            body.MovePosition(body.position);
+            return;
+        }
+
         var speed = movementSettings != null ? movementSettings.moveSpeed : 4.5f;
+        if (inputReader != null && inputReader.RunHeld && movementSettings != null)
+            speed *= movementSettings.runSpeedMultiplier;
+
         body.MovePosition(body.position + moveInput * speed * Time.fixedDeltaTime);
     }
 

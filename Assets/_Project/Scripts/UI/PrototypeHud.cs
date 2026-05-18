@@ -2,10 +2,12 @@ using UnityEngine;
 
 public sealed class PrototypeHud : MonoBehaviour
 {
+    private const string ChickenQuestId = "collect_chickens";
+    private const int ChickenQuestTarget = 3;
+
     private GUIStyle labelStyle;
     private HealthSystem playerHealth;
     private PlayerInventory inventory;
-    private PlayerQuestLog questLog;
 
     private void Start()
     {
@@ -17,7 +19,6 @@ public sealed class PrototypeHud : MonoBehaviour
 
         playerHealth = player.GetComponent<HealthSystem>();
         inventory = player.GetComponent<PlayerInventory>();
-        questLog = player.GetComponent<PlayerQuestLog>();
     }
 
     private void OnGUI()
@@ -28,34 +29,50 @@ public sealed class PrototypeHud : MonoBehaviour
             normal = { textColor = new Color(0.86f, 0.95f, 0.88f) }
         };
 
-        GUI.Label(new Rect(18, 14, 720, 28), "Nyt Spil - prototype", labelStyle);
-        GUI.Label(new Rect(18, 42, 720, 28), $"HP: {ReadHealth()}   Coins: {ReadCoins()}", labelStyle);
-        GUI.Label(new Rect(18, 70, 720, 28), "Move: WASD/arrows   Attack: Space/Mouse   Talk: E   Save: F5   Load: F9", labelStyle);
+        GUI.Label(new Rect(18, 14, 720, 28), "Emil paa gaarden - prototype", labelStyle);
+        GUI.Label(new Rect(18, 42, 720, 28), $"HP: {ReadHealth()}   Moenter: {ReadCoins()}   Ballade: {ReadMischief()}", labelStyle);
+        GUI.Label(new Rect(18, 70, 920, 28), "Bevaeg: WASD   Hop: Space   Tal: E   Loeb: Shift   Gem: F5   Indlaes: F9", labelStyle);
         GUI.Label(new Rect(18, 98, 920, 28), "Quest: " + ReadQuestText(), labelStyle);
     }
 
-    private string ReadHealth()
-    {
-        return playerHealth != null ? $"{playerHealth.CurrentHealth}/{playerHealth.MaxHealth}" : "-";
-    }
+    private string ReadHealth() =>
+        playerHealth != null ? $"{playerHealth.CurrentHealth}/{playerHealth.MaxHealth}" : "-";
 
-    private int ReadCoins()
-    {
-        return inventory != null ? inventory.Coins : 0;
-    }
+    private int ReadCoins() =>
+        inventory != null ? inventory.Coins : 0;
 
-    private string ReadQuestText()
+    private string ReadMischief() =>
+        MischiefSystem.Instance != null ? MischiefSystem.Instance.Points.ToString() : "0";
+
+    private static string ReadQuestText()
     {
-        if (questLog == null || questLog.States.Count == 0)
+        var questManager = QuestManager.Instance;
+        if (questManager == null)
         {
-            return "Talk to Mira near the lantern.";
+            return "QuestManager mangler i scenen.";
         }
 
-        foreach (var state in questLog.States.Values)
+        var status = questManager.GetStatus(ChickenQuestId);
+        var data = questManager.GetData(ChickenQuestId);
+
+        return status switch
         {
-            return state == QuestState.Completed ? "Lantern Errand complete" : "Defeat a shade and bring Mira its Echo Shard";
+            QuestState.NotStarted => "Tal med gaardejeren.",
+            QuestState.Active => BuildActiveText(data),
+            QuestState.Completed => "Fang hoensene - afleveret!",
+            _ => string.Empty,
+        };
+    }
+
+    private static string BuildActiveText(QuestRuntimeData data)
+    {
+        if (data == null)
+        {
+            return "Quest aktiv...";
         }
 
-        return "Talk to Mira near the lantern.";
+        return QuestManager.Instance.IsReadyToComplete(ChickenQuestId)
+            ? "Vend tilbage til gaardejeren!"
+            : $"Fang hoensene: {data.StepProgress}/{ChickenQuestTarget}";
     }
 }

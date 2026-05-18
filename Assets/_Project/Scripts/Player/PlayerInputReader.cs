@@ -14,6 +14,9 @@ public sealed class PlayerInputReader : MonoBehaviour
     public event Action PausePressed;
     public event Action SavePressed;
     public event Action LoadPressed;
+    public event Action JumpPressed;
+
+    public bool RunHeld { get; private set; }
 
     public Vector2 MoveInput { get; private set; }
 
@@ -63,6 +66,19 @@ public sealed class PlayerInputReader : MonoBehaviour
         {
             LoadPressed?.Invoke();
         }
+    }
+
+    public void OnJump(InputValue value)
+    {
+        if (IsPressed(value))
+        {
+            JumpPressed?.Invoke();
+        }
+    }
+
+    public void OnRun(InputValue value)
+    {
+        RunHeld = value.Get<float>() > 0.5f;
     }
 
     private static bool IsPressed(InputValue value)

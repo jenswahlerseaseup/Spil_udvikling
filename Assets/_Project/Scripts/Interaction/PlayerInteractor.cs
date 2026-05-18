@@ -10,7 +10,6 @@ public sealed class PlayerInteractor : MonoBehaviour
     private PlayerInputReader inputReader;
 
     public PlayerInventory Inventory { get; private set; }
-    public PlayerQuestLog QuestLog { get; private set; }
 
     private string activeSpeaker;
     private string activeMessage;
@@ -24,7 +23,6 @@ public sealed class PlayerInteractor : MonoBehaviour
     {
         inputReader = GetComponent<PlayerInputReader>();
         Inventory = GetComponent<PlayerInventory>();
-        QuestLog = GetComponent<PlayerQuestLog>();
     }
 
     private void OnEnable()
@@ -56,6 +54,13 @@ public sealed class PlayerInteractor : MonoBehaviour
 
     private void Interact()
     {
+        // Forward to dialogue manager if a conversation is open.
+        if (DialogueManager.IsDialogueOpen)
+        {
+            DialogueManager.Instance.Advance();
+            return;
+        }
+
         CurrentInteractable?.Interact(this);
     }
 

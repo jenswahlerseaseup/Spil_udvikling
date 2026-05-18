@@ -108,8 +108,8 @@ GameObject:
   - component: {fileID: 7448155998594192927}
   - component: {fileID: 2936610241141562603}
   - component: {fileID: 7600419525811008490}
-  - component: {fileID: 1476196256998385100}
   - component: {fileID: 9108276643416980545}
+  - component: {fileID: 2801850713079540827}
   - component: {fileID: 1481593498649029431}
   - component: {fileID: 5512351940892842867}
   m_Layer: 8
@@ -320,18 +320,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventory
   coins: 0
   items: []
---- !u!114 &1476196256998385100
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6281881474313642775}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44cb58c8914e4f0fabd037940f968a95, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerQuestLog
 --- !u!114 &9108276643416980545
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -345,6 +333,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
   messageDuration: 4
+--- !u!114 &2801850713079540827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6281881474313642775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e03bf2614400b934db7d152582b5e07e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerJump
+  visual: {fileID: 0}
+  jumpDuration: 0.35
+  jumpHeight: 0.3
 --- !u!114 &1481593498649029431
 MonoBehaviour:
   m_ObjectHideFlags: 0

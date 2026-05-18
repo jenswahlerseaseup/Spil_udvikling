@@ -15,6 +15,7 @@ public static class InitialGameplaySceneBuilder
     private const string MovementSettingsPath = "Assets/_Project/ScriptableObjects/Player/DefaultPlayerMovement.asset";
     private const string EmilSpriteSetPath = "Assets/_Project/ScriptableObjects/Player/EmilSpriteSet.asset";
     private const string EmilSpriteFolder = "Assets/emil_sprites_v2/";
+    private const string ItemRegistryPath = "Assets/_Project/ScriptableObjects/Items/ItemRegistry.asset";
     private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player.prefab";
     private const string PlayerSpritePath = "Assets/_Project/Art/Sprites/placeholder_player.png";
     private const string PlayfieldBackgroundPath = "Assets/_Project/Art/Backgrounds/mountain_village_playfield.png";
@@ -29,6 +30,7 @@ public static class InitialGameplaySceneBuilder
     private const string EchoShardPath = "Assets/_Project/ScriptableObjects/Items/EchoShard.asset";
     private const string HearthTeaPath = "Assets/_Project/ScriptableObjects/Items/HearthTea.asset";
     private const string LanternQuestPath = "Assets/_Project/ScriptableObjects/Quests/LanternErrand.asset";
+    private const string ChickenQuestPath = "Assets/_Project/ScriptableObjects/Quests/CollectChickens.asset";
     private const string AutoSetupSessionKey = "NytSpil.InitialGameplaySceneBuilder.AutoSetupQueued";
 
     [InitializeOnLoadMethod]
@@ -73,6 +75,7 @@ public static class InitialGameplaySceneBuilder
         scene.name = "Gameplay";
 
         CreatePlayfieldBackground();
+        CreateCoreSystems();
         var player = CreatePlayer();
         PrefabUtility.SaveAsPrefabAssetAndConnect(player, PlayerPrefabPath, InteractionMode.AutomatedAction);
         CreateCamera(player.transform);
@@ -80,14 +83,35 @@ public static class InitialGameplaySceneBuilder
         CreateNpc();
         CreateShopkeeper();
         CreateEnemy();
+        CreateFarmInteractions();
         CreateShrine();
-        CreateSaveController(player.transform);
         CreateGameplayHud();
 
         EditorSceneManager.SaveScene(scene, GameplayScenePath);
         EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(GameplayScenePath, true) };
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
+    }
+
+    private static void CreateCoreSystems()
+    {
+        var systems = new GameObject("Core Systems");
+
+        systems.AddComponent<GameManager>();
+        systems.AddComponent<DialogueManager>();
+        systems.AddComponent<MischiefSystem>();
+
+        var questManager = systems.AddComponent<QuestManager>();
+        var questManagerObject = new SerializedObject(questManager);
+        var quests = questManagerObject.FindProperty("allQuests");
+        quests.arraySize = 1;
+        quests.GetArrayElementAtIndex(0).objectReferenceValue = AssetDatabase.LoadAssetAtPath<QuestDefinition>(ChickenQuestPath);
+        questManagerObject.ApplyModifiedPropertiesWithoutUndo();
+
+        var saveManager = systems.AddComponent<SaveManager>();
+        var saveManagerObject = new SerializedObject(saveManager);
+        saveManagerObject.FindProperty("itemRegistry").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemRegistry>(ItemRegistryPath);
+        saveManagerObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static GameObject CreatePlayer()
@@ -123,8 +147,8 @@ public static class InitialGameplaySceneBuilder
         var motor = player.AddComponent<TopDownPlayerMotor>();
         player.AddComponent<HealthSystem>();
         player.AddComponent<PlayerInventory>();
-        player.AddComponent<PlayerQuestLog>();
         player.AddComponent<PlayerInteractor>();
+        player.AddComponent<PlayerJump>();
         var attack = player.AddComponent<PlayerAttackController>();
 
         var movementSettings = AssetDatabase.LoadAssetAtPath<PlayerMovementSettings>(MovementSettingsPath);
@@ -208,7 +232,7 @@ public static class InitialGameplaySceneBuilder
 
     private static void CreateNpc()
     {
-        var npc = new GameObject("Mira - Lantern Keeper");
+        var npc = new GameObject("Gaardejer - Chicken Quest");
         npc.layer = LayerMask.NameToLayer("Interactable");
         npc.transform.position = new Vector3(1.7f, 1.2f, 0f);
 
@@ -219,9 +243,10 @@ public static class InitialGameplaySceneBuilder
         var collider = npc.AddComponent<BoxCollider2D>();
         collider.size = new Vector2(0.75f, 0.95f);
 
-        var questGiver = npc.AddComponent<QuestGiverInteractable>();
-        var questObject = new SerializedObject(questGiver);
-        questObject.FindProperty("quest").objectReferenceValue = AssetDatabase.LoadAssetAtPath<QuestDefinition>(LanternQuestPath);
+        var questNpc = npc.AddComponent<NPCInteractable>();
+        var questObject = new SerializedObject(questNpc);
+        questObject.FindProperty("speakerName").stringValue = "Gaardejer";
+        questObject.FindProperty("questToGive").objectReferenceValue = AssetDatabase.LoadAssetAtPath<QuestDefinition>(ChickenQuestPath);
         questObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -279,6 +304,51 @@ public static class InitialGameplaySceneBuilder
         dropperObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
+    private static void CreateFarmInteractions()
+    {
+        CreateChicken("Chicken A", new Vector3(-2.4f, 0.95f, 0f));
+        CreateChicken("Chicken B", new Vector3(-1.1f, -2.1f, 0f));
+        CreateChicken("Chicken C", new Vector3(2.25f, 0.25f, 0f));
+
+        CreateBucket("Loose Bucket", new Vector3(-3.25f, -0.35f, 0f));
+    }
+
+    private static void CreateChicken(string name, Vector3 position)
+    {
+        var chicken = new GameObject(name);
+        chicken.layer = LayerMask.NameToLayer("Interactable");
+        chicken.transform.position = position;
+
+        var renderer = chicken.AddComponent<SpriteRenderer>();
+        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(LootSpritePath);
+        renderer.color = new Color(1f, 0.92f, 0.68f);
+        renderer.sortingOrder = 16;
+
+        var collider = chicken.AddComponent<CircleCollider2D>();
+        collider.isTrigger = true;
+        collider.radius = 0.4f;
+
+        chicken.AddComponent<ChickenInteractable>();
+    }
+
+    private static void CreateBucket(string name, Vector3 position)
+    {
+        var bucket = new GameObject(name);
+        bucket.layer = LayerMask.NameToLayer("Interactable");
+        bucket.transform.position = position;
+
+        var renderer = bucket.AddComponent<SpriteRenderer>();
+        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ShopSpritePath);
+        renderer.color = new Color(0.72f, 0.66f, 0.82f);
+        renderer.sortingOrder = 14;
+
+        var collider = bucket.AddComponent<BoxCollider2D>();
+        collider.isTrigger = true;
+        collider.size = new Vector2(0.6f, 0.6f);
+
+        bucket.AddComponent<BucketInteractable>();
+    }
+
     private static void CreateShrine()
     {
         var shrine = new GameObject("Old North Shrine");
@@ -311,9 +381,9 @@ public static class InitialGameplaySceneBuilder
     private static void CreateSaveController(Transform player)
     {
         var save = new GameObject("Save Game Controller");
-        var controller = save.AddComponent<SaveGameController>();
-        var saveObject = new SerializedObject(controller);
-        saveObject.FindProperty("player").objectReferenceValue = player;
+        var saveManager = save.AddComponent<SaveManager>();
+        var saveObject = new SerializedObject(saveManager);
+        saveObject.FindProperty("itemRegistry").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemRegistry>(ItemRegistryPath);
         saveObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
@@ -336,6 +406,8 @@ public static class InitialGameplaySceneBuilder
             "Assets/_Project/ScriptableObjects/Quests",
             "Assets/_Project/Scripts",
             "Assets/_Project/Scripts/Combat",
+            "Assets/_Project/Scripts/Core",
+            "Assets/_Project/Scripts/Dialogue",
             "Assets/_Project/Scripts/Enemies",
             "Assets/_Project/Scripts/Inventory",
             "Assets/_Project/Scripts/Interaction",
@@ -372,6 +444,8 @@ public static class InitialGameplaySceneBuilder
         var echoShard = EnsureItem(EchoShardPath, "echo_shard", "Echo Shard", 2, LootSpritePath);
         var hearthTea = EnsureItem(HearthTeaPath, "hearth_tea", "Hearth Tea", 3, ShopSpritePath);
         var emilSpriteSet = EnsureEmilSpriteSet();
+        var itemRegistry = EnsureItemRegistry(echoShard, hearthTea);
+        var chickenQuest = EnsureChickenQuest(hearthTea);
 
         if (!File.Exists(LanternQuestPath))
         {
@@ -381,17 +455,19 @@ public static class InitialGameplaySceneBuilder
 
         var questAsset = AssetDatabase.LoadAssetAtPath<QuestDefinition>(LanternQuestPath);
         var questObject = new SerializedObject(questAsset);
-        questObject.FindProperty("id").stringValue = "lantern_errand";
+        questObject.FindProperty("questId").stringValue = "lantern_errand";
         questObject.FindProperty("title").stringValue = "Lantern Errand";
         questObject.FindProperty("description").stringValue = "A shade is circling the old shrine. Bring me one Echo Shard from it, and I can keep the village lantern lit.";
-        questObject.FindProperty("requiredItem").objectReferenceValue = echoShard;
-        questObject.FindProperty("requiredQuantity").intValue = 1;
-        questObject.FindProperty("coinReward").intValue = 6;
+        SetQuestSteps(questObject, ("Bring back one Echo Shard.", 1));
+        SetRewardItems(questObject);
+        questObject.FindProperty("rewardCoins").intValue = 6;
         questObject.ApplyModifiedPropertiesWithoutUndo();
 
         EditorUtility.SetDirty(echoShard);
         EditorUtility.SetDirty(hearthTea);
         EditorUtility.SetDirty(questAsset);
+        EditorUtility.SetDirty(itemRegistry);
+        EditorUtility.SetDirty(chickenQuest);
         if (emilSpriteSet != null)
         {
             EditorUtility.SetDirty(emilSpriteSet);
@@ -413,6 +489,67 @@ public static class InitialGameplaySceneBuilder
         itemObject.FindProperty("icon").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
         itemObject.ApplyModifiedPropertiesWithoutUndo();
         return item;
+    }
+
+    private static ItemRegistry EnsureItemRegistry(params ItemDefinition[] items)
+    {
+        if (!File.Exists(ItemRegistryPath))
+        {
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<ItemRegistry>(), ItemRegistryPath);
+        }
+
+        var registry = AssetDatabase.LoadAssetAtPath<ItemRegistry>(ItemRegistryPath);
+        var registryObject = new SerializedObject(registry);
+        var itemArray = registryObject.FindProperty("items");
+        itemArray.arraySize = items.Length;
+        for (var i = 0; i < items.Length; i++)
+        {
+            itemArray.GetArrayElementAtIndex(i).objectReferenceValue = items[i];
+        }
+
+        registryObject.ApplyModifiedPropertiesWithoutUndo();
+        return registry;
+    }
+
+    private static QuestDefinition EnsureChickenQuest(ItemDefinition rewardItem)
+    {
+        if (!File.Exists(ChickenQuestPath))
+        {
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<QuestDefinition>(), ChickenQuestPath);
+        }
+
+        var quest = AssetDatabase.LoadAssetAtPath<QuestDefinition>(ChickenQuestPath);
+        var questObject = new SerializedObject(quest);
+        questObject.FindProperty("questId").stringValue = "collect_chickens";
+        questObject.FindProperty("title").stringValue = "Chicken Roundup";
+        questObject.FindProperty("description").stringValue = "Three chickens have escaped into the village yard. Catch them before they cause chaos.";
+        SetQuestSteps(questObject, ("Catch three escaped chickens.", 3));
+        SetRewardItems(questObject, rewardItem);
+        questObject.FindProperty("rewardCoins").intValue = 5;
+        questObject.ApplyModifiedPropertiesWithoutUndo();
+        return quest;
+    }
+
+    private static void SetQuestSteps(SerializedObject questObject, params (string description, int requiredCount)[] steps)
+    {
+        var stepArray = questObject.FindProperty("steps");
+        stepArray.arraySize = steps.Length;
+        for (var i = 0; i < steps.Length; i++)
+        {
+            var step = stepArray.GetArrayElementAtIndex(i);
+            step.FindPropertyRelative("description").stringValue = steps[i].description;
+            step.FindPropertyRelative("requiredCount").intValue = steps[i].requiredCount;
+        }
+    }
+
+    private static void SetRewardItems(SerializedObject questObject, params ItemDefinition[] items)
+    {
+        var rewards = questObject.FindProperty("rewardItems");
+        rewards.arraySize = items.Length;
+        for (var i = 0; i < items.Length; i++)
+        {
+            rewards.GetArrayElementAtIndex(i).objectReferenceValue = items[i];
+        }
     }
 
     private static CharacterSpriteSet EnsureEmilSpriteSet()
