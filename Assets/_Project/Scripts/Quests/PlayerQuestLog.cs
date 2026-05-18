@@ -33,7 +33,7 @@ public sealed class PlayerQuestLog : MonoBehaviour
 
     public void CompleteQuest(QuestDefinition quest)
     {
-        if (quest == null)
+        if (quest == null || GetState(quest) != QuestState.Active)
         {
             return;
         }

@@ -10,7 +10,7 @@ public sealed class ShopInteractable : MonoBehaviour, IInteractable
 
     public void Interact(PlayerInteractor interactor)
     {
-        var inventory = interactor.GetComponent<PlayerInventory>();
+        var inventory = interactor.Inventory;
         if (inventory == null || itemForSale == null)
         {
             interactor.ShowMessage(speakerName, "Shop is closed.");

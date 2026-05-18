@@ -4,6 +4,7 @@ public sealed class ContactDamage : MonoBehaviour
 {
     [SerializeField, Min(0)] private int damage = 1;
     [SerializeField, Min(0f)] private float cooldown = 0.9f;
+    [SerializeField] private LayerMask targetMask = ~0;
 
     private float nextDamageTime;
 
@@ -19,7 +20,7 @@ public sealed class ContactDamage : MonoBehaviour
 
     private void TryDamage(Collider2D other)
     {
-        if (Time.time < nextDamageTime || !other.CompareTag("Player"))
+        if (Time.time < nextDamageTime || (targetMask.value & (1 << other.gameObject.layer)) == 0)
         {
             return;
         }

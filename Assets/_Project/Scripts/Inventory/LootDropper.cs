@@ -7,6 +7,8 @@ public sealed class LootDropper : MonoBehaviour
     [SerializeField] private Sprite lootSprite;
     [SerializeField, Min(0)] private int coins = 1;
     [SerializeField, Min(1)] private int quantity = 1;
+    [SerializeField] private int lootSortingOrder = 12;
+    [SerializeField, Min(0f)] private float colliderRadius = 0.35f;
 
     private HealthSystem health;
 
@@ -32,11 +34,11 @@ public sealed class LootDropper : MonoBehaviour
 
         var renderer = pickup.AddComponent<SpriteRenderer>();
         renderer.sprite = lootSprite;
-        renderer.sortingOrder = 12;
+        renderer.sortingOrder = lootSortingOrder;
 
         var collider = pickup.AddComponent<CircleCollider2D>();
         collider.isTrigger = true;
-        collider.radius = 0.35f;
+        collider.radius = colliderRadius;
 
         pickup.AddComponent<PickupItem>().Configure(item, quantity, coins);
 

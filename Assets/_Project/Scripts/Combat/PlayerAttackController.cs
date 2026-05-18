@@ -12,6 +12,8 @@ public sealed class PlayerAttackController : MonoBehaviour
     [SerializeField] private LayerMask targetMask;
     [SerializeField] private SpriteRenderer attackFlash;
 
+    private static readonly Collider2D[] HitBuffer = new Collider2D[16];
+
     private PlayerInputReader inputReader;
     private TopDownPlayerMotor motor;
     private float nextAttackTime;
@@ -44,11 +46,10 @@ public sealed class PlayerAttackController : MonoBehaviour
 
         var facing = motor.FacingDirection.sqrMagnitude > 0.01f ? motor.FacingDirection.normalized : Vector2.down;
         var center = (Vector2)transform.position + facing * range;
-        var hits = Physics2D.OverlapCircleAll(center, radius, targetMask);
-
-        foreach (var hit in hits)
+        var hitCount = Physics2D.OverlapCircleNonAlloc(center, radius, HitBuffer, targetMask);
+        for (var i = 0; i < hitCount; i++)
         {
-            if (hit.TryGetComponent<HealthSystem>(out var health))
+            if (HitBuffer[i].TryGetComponent<HealthSystem>(out var health))
             {
                 health.TakeDamage(damage);
             }

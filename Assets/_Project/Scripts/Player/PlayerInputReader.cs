@@ -12,6 +12,8 @@ public sealed class PlayerInputReader : MonoBehaviour
     public event Action InteractPressed;
     public event Action AttackPressed;
     public event Action PausePressed;
+    public event Action SavePressed;
+    public event Action LoadPressed;
 
     public Vector2 MoveInput { get; private set; }
 
@@ -44,6 +46,22 @@ public sealed class PlayerInputReader : MonoBehaviour
         if (IsPressed(value))
         {
             PausePressed?.Invoke();
+        }
+    }
+
+    public void OnSave(InputValue value)
+    {
+        if (IsPressed(value))
+        {
+            SavePressed?.Invoke();
+        }
+    }
+
+    public void OnLoad(InputValue value)
+    {
+        if (IsPressed(value))
+        {
+            LoadPressed?.Invoke();
         }
     }
 

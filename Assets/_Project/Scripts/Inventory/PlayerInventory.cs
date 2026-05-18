@@ -42,14 +42,14 @@ public sealed class PlayerInventory : MonoBehaviour
             return;
         }
 
-        var stack = items.Find(entry => entry.item == item);
+        var stack = items.Find(entry => entry.Item == item);
         if (stack == null)
         {
             items.Add(new InventoryItemStack(item, quantity));
         }
         else
         {
-            stack.quantity += quantity;
+            stack.Add(quantity);
         }
 
         Changed?.Invoke();
@@ -57,8 +57,8 @@ public sealed class PlayerInventory : MonoBehaviour
 
     public int CountItem(ItemDefinition item)
     {
-        var stack = items.Find(entry => entry.item == item);
-        return stack != null ? stack.quantity : 0;
+        var stack = items.Find(entry => entry.Item == item);
+        return stack != null ? stack.Quantity : 0;
     }
 
     public bool TryRemoveItem(ItemDefinition item, int quantity)
@@ -68,14 +68,14 @@ public sealed class PlayerInventory : MonoBehaviour
             return false;
         }
 
-        var stack = items.Find(entry => entry.item == item);
-        if (stack == null || stack.quantity < quantity)
+        var stack = items.Find(entry => entry.Item == item);
+        if (stack == null || stack.Quantity < quantity)
         {
             return false;
         }
 
-        stack.quantity -= quantity;
-        if (stack.quantity == 0)
+        stack.TryRemove(quantity);
+        if (stack.Quantity == 0)
         {
             items.Remove(stack);
         }

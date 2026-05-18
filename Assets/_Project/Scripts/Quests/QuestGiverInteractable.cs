@@ -9,9 +9,8 @@ public sealed class QuestGiverInteractable : MonoBehaviour, IInteractable
 
     public void Interact(PlayerInteractor interactor)
     {
-        var player = interactor.gameObject;
-        var log = player.GetComponent<PlayerQuestLog>();
-        var inventory = player.GetComponent<PlayerInventory>();
+        var log = interactor.QuestLog;
+        var inventory = interactor.Inventory;
 
         if (quest == null || log == null || inventory == null)
         {
@@ -30,6 +29,12 @@ public sealed class QuestGiverInteractable : MonoBehaviour, IInteractable
         if (state == QuestState.Completed)
         {
             interactor.ShowMessage(speakerName, "The lantern burns a little brighter because of you.");
+            return;
+        }
+
+        if (quest.RequiredItem == null)
+        {
+            interactor.ShowMessage(speakerName, "I seem to have forgotten what I needed... check back later.");
             return;
         }
 

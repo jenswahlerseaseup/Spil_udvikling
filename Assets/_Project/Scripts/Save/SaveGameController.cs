@@ -3,16 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
-
 public sealed class SaveGameController : MonoBehaviour
 {
     private const string SaveFileName = "savegame.json";
 
     [SerializeField] private Transform player;
+    [SerializeField] private ItemRegistry itemRegistry;
 
+    private PlayerInputReader inputReader;
     private string SavePath => Path.Combine(Application.persistentDataPath, SaveFileName);
 
     private void Start()
@@ -23,28 +21,26 @@ public sealed class SaveGameController : MonoBehaviour
             player = playerObject != null ? playerObject.transform : null;
         }
 
+        if (player != null)
+        {
+            inputReader = player.GetComponent<PlayerInputReader>();
+            if (inputReader != null)
+            {
+                inputReader.SavePressed += Save;
+                inputReader.LoadPressed += Load;
+            }
+        }
+
         Load();
     }
 
-    private void Update()
+    private void OnDestroy()
     {
-#if ENABLE_INPUT_SYSTEM
-        var keyboard = Keyboard.current;
-        if (keyboard == null)
+        if (inputReader != null)
         {
-            return;
+            inputReader.SavePressed -= Save;
+            inputReader.LoadPressed -= Load;
         }
-
-        if (keyboard.f5Key.wasPressedThisFrame)
-        {
-            Save();
-        }
-
-        if (keyboard.f9Key.wasPressedThisFrame)
-        {
-            Load();
-        }
-#endif
     }
 
     private void OnApplicationQuit()
@@ -65,7 +61,8 @@ public sealed class SaveGameController : MonoBehaviour
             playerY = player.position.y,
             coins = player.GetComponent<PlayerInventory>()?.Coins ?? 0,
             health = player.GetComponent<HealthSystem>()?.CurrentHealth ?? 1,
-            quests = CaptureQuestStates(player.GetComponent<PlayerQuestLog>())
+            quests = CaptureQuestStates(player.GetComponent<PlayerQuestLog>()),
+            items = CaptureItemStacks(player.GetComponent<PlayerInventory>())
         };
 
         File.WriteAllText(SavePath, JsonUtility.ToJson(data, true));
@@ -84,7 +81,7 @@ public sealed class SaveGameController : MonoBehaviour
 
         if (player.TryGetComponent<PlayerInventory>(out var inventory))
         {
-            inventory.LoadState(data.coins, null);
+            inventory.LoadState(data.coins, RestoreItemStacks(data.items));
         }
 
         if (player.TryGetComponent<HealthSystem>(out var health))
@@ -96,6 +93,45 @@ public sealed class SaveGameController : MonoBehaviour
         {
             questLog.LoadState(RestoreQuestStates(data.quests));
         }
+    }
+
+    private static List<ItemSaveEntry> CaptureItemStacks(PlayerInventory inventory)
+    {
+        var entries = new List<ItemSaveEntry>();
+        if (inventory == null)
+        {
+            return entries;
+        }
+
+        foreach (var stack in inventory.Items)
+        {
+            if (stack.Item != null)
+            {
+                entries.Add(new ItemSaveEntry { id = stack.Item.Id, quantity = stack.Quantity });
+            }
+        }
+
+        return entries;
+    }
+
+    private List<InventoryItemStack> RestoreItemStacks(List<ItemSaveEntry> entries)
+    {
+        var stacks = new List<InventoryItemStack>();
+        if (entries == null || itemRegistry == null)
+        {
+            return stacks;
+        }
+
+        foreach (var entry in entries)
+        {
+            var item = itemRegistry.Find(entry.id);
+            if (item != null)
+            {
+                stacks.Add(new InventoryItemStack(item, entry.quantity));
+            }
+        }
+
+        return stacks;
     }
 
     private static List<QuestSaveEntry> CaptureQuestStates(PlayerQuestLog questLog)
@@ -138,6 +174,7 @@ public sealed class SaveGameController : MonoBehaviour
         public int coins;
         public int health;
         public List<QuestSaveEntry> quests = new();
+        public List<ItemSaveEntry> items = new();
     }
 
     [Serializable]
@@ -145,5 +182,12 @@ public sealed class SaveGameController : MonoBehaviour
     {
         public string id;
         public QuestState state;
+    }
+
+    [Serializable]
+    private sealed class ItemSaveEntry
+    {
+        public string id;
+        public int quantity;
     }
 }

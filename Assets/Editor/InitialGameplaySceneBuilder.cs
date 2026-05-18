@@ -15,6 +15,7 @@ public static class InitialGameplaySceneBuilder
     private const string MovementSettingsPath = "Assets/_Project/ScriptableObjects/Player/DefaultPlayerMovement.asset";
     private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player.prefab";
     private const string PlayerSpritePath = "Assets/_Project/Art/Sprites/placeholder_player.png";
+    private const string PlayfieldBackgroundPath = "Assets/_Project/Art/Backgrounds/mountain_village_playfield.png";
     private const string FloorSpritePath = "Assets/_Project/Art/Sprites/placeholder_floor.png";
     private const string WallSpritePath = "Assets/_Project/Art/Sprites/placeholder_wall.png";
     private const string NpcSpritePath = "Assets/_Project/Art/Sprites/placeholder_npc.png";
@@ -69,7 +70,7 @@ public static class InitialGameplaySceneBuilder
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         scene.name = "Gameplay";
 
-        CreateFloor();
+        CreatePlayfieldBackground();
         var player = CreatePlayer();
         PrefabUtility.SaveAsPrefabAssetAndConnect(player, PlayerPrefabPath, InteractionMode.AutomatedAction);
         CreateCamera(player.transform);
@@ -156,15 +157,20 @@ public static class InitialGameplaySceneBuilder
         return player;
     }
 
-    private static void CreateFloor()
+    private static void CreatePlayfieldBackground()
     {
-        var floor = new GameObject("Placeholder Floor");
+        var floor = new GameObject("Mountain Village Playfield");
         floor.transform.position = Vector3.zero;
-        floor.transform.localScale = new Vector3(11f, 11f, 1f);
 
         var renderer = floor.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(FloorSpritePath);
-        renderer.sortingOrder = -10;
+        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PlayfieldBackgroundPath);
+        renderer.sortingOrder = -30;
+
+        if (renderer.sprite == null)
+        {
+            renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(FloorSpritePath);
+            floor.transform.localScale = new Vector3(11f, 11f, 1f);
+        }
     }
 
     private static void CreateCamera(Transform target)
@@ -272,14 +278,10 @@ public static class InitialGameplaySceneBuilder
     {
         var shrine = new GameObject("Old North Shrine");
         shrine.layer = LayerMask.NameToLayer("Solid");
-        shrine.transform.position = new Vector3(-1.8f, 1.9f, 0f);
-
-        var renderer = shrine.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ShrineSpritePath);
-        renderer.sortingOrder = 8;
+        shrine.transform.position = new Vector3(0f, 2.65f, 0f);
 
         var collider = shrine.AddComponent<BoxCollider2D>();
-        collider.size = new Vector2(1.1f, 1.1f);
+        collider.size = new Vector2(1.45f, 1.2f);
     }
 
     private static void CreateWall(Transform parent, string name, int layer, Vector2 position, Vector2 size)
@@ -292,10 +294,7 @@ public static class InitialGameplaySceneBuilder
         var collider = wall.AddComponent<BoxCollider2D>();
         collider.size = size;
 
-        var renderer = wall.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(WallSpritePath);
-        renderer.sortingOrder = 5;
-        wall.transform.localScale = new Vector3(size.x, size.y, 1f);
+        // The high-detail playfield already contains edge art; walls stay invisible and only provide collision.
     }
 
     private static void CreateGameplayHud()
@@ -319,6 +318,7 @@ public static class InitialGameplaySceneBuilder
         {
             "Assets/_Project/Animations",
             "Assets/_Project/Art",
+            "Assets/_Project/Art/Backgrounds",
             "Assets/_Project/Art/Sprites",
             "Assets/_Project/Audio",
             "Assets/_Project/Input",
@@ -357,6 +357,7 @@ public static class InitialGameplaySceneBuilder
         CreateSpriteAsset(LootSpritePath, 12, 12, new Color32(112, 224, 242, 255), new Color32(28, 50, 68, 255));
         CreateSpriteAsset(ShopSpritePath, 16, 24, new Color32(236, 136, 90, 255), new Color32(54, 38, 42, 255));
         CreateSpriteAsset(AttackSpritePath, 14, 6, new Color32(255, 245, 146, 210), new Color32(255, 185, 81, 230));
+        ConfigureSpriteImporter(PlayfieldBackgroundPath, 128f);
     }
 
     private static void EnsureGameplayData()
@@ -431,6 +432,23 @@ public static class InitialGameplaySceneBuilder
         importer.spritePixelsPerUnit = 16f;
         importer.filterMode = FilterMode.Point;
         importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.SaveAndReimport();
+    }
+
+    private static void ConfigureSpriteImporter(string path, float pixelsPerUnit)
+    {
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        AssetDatabase.ImportAsset(path);
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spritePixelsPerUnit = pixelsPerUnit;
+        importer.filterMode = FilterMode.Point;
+        importer.textureCompression = TextureImporterCompression.Uncompressed;
+        importer.mipmapEnabled = false;
         importer.SaveAndReimport();
     }
 

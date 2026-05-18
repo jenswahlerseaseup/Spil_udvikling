@@ -8,6 +8,10 @@ public sealed class PlayerInteractor : MonoBehaviour
 
     private readonly List<IInteractable> nearbyInteractables = new();
     private PlayerInputReader inputReader;
+
+    public PlayerInventory Inventory { get; private set; }
+    public PlayerQuestLog QuestLog { get; private set; }
+
     private string activeSpeaker;
     private string activeMessage;
     private float messageHideTime;
@@ -19,6 +23,8 @@ public sealed class PlayerInteractor : MonoBehaviour
     private void Awake()
     {
         inputReader = GetComponent<PlayerInputReader>();
+        Inventory = GetComponent<PlayerInventory>();
+        QuestLog = GetComponent<PlayerQuestLog>();
     }
 
     private void OnEnable()
