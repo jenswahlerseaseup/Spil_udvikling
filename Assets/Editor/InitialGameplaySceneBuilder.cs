@@ -13,6 +13,8 @@ public static class InitialGameplaySceneBuilder
     private const string GameplayScenePath = "Assets/_Project/Scenes/Gameplay.unity";
     private const string InputAssetPath = "Assets/_Project/Input/GameInput.inputactions";
     private const string MovementSettingsPath = "Assets/_Project/ScriptableObjects/Player/DefaultPlayerMovement.asset";
+    private const string EmilSpriteSetPath = "Assets/_Project/ScriptableObjects/Player/EmilSpriteSet.asset";
+    private const string EmilSpriteFolder = "Assets/emil_sprites_v2/";
     private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player.prefab";
     private const string PlayerSpritePath = "Assets/_Project/Art/Sprites/placeholder_player.png";
     private const string PlayfieldBackgroundPath = "Assets/_Project/Art/Backgrounds/mountain_village_playfield.png";
@@ -124,8 +126,6 @@ public static class InitialGameplaySceneBuilder
         player.AddComponent<PlayerQuestLog>();
         player.AddComponent<PlayerInteractor>();
         var attack = player.AddComponent<PlayerAttackController>();
-        player.AddComponent<PlayerAnimationController>();
-        player.AddComponent<TopDownSpriteAnimator>();
 
         var movementSettings = AssetDatabase.LoadAssetAtPath<PlayerMovementSettings>(MovementSettingsPath);
         var motorObject = new SerializedObject(motor);
@@ -139,7 +139,12 @@ public static class InitialGameplaySceneBuilder
         var renderer = visuals.AddComponent<SpriteRenderer>();
         renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PlayerSpritePath);
         renderer.sortingOrder = 20;
-        visuals.AddComponent<Animator>();
+
+        var spriteAnimator = player.AddComponent<DirectionalSpriteAnimator>();
+        var spriteAnimatorObject = new SerializedObject(spriteAnimator);
+        spriteAnimatorObject.FindProperty("spriteRenderer").objectReferenceValue = renderer;
+        spriteAnimatorObject.FindProperty("spriteSet").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterSpriteSet>(EmilSpriteSetPath);
+        spriteAnimatorObject.ApplyModifiedPropertiesWithoutUndo();
 
         var attackFlash = new GameObject("Attack Flash");
         attackFlash.transform.SetParent(player.transform);
@@ -327,6 +332,7 @@ public static class InitialGameplaySceneBuilder
             "Assets/_Project/Scenes",
             "Assets/_Project/ScriptableObjects",
             "Assets/_Project/ScriptableObjects/Items",
+            "Assets/_Project/ScriptableObjects/Player",
             "Assets/_Project/ScriptableObjects/Quests",
             "Assets/_Project/Scripts",
             "Assets/_Project/Scripts/Combat",
@@ -358,12 +364,14 @@ public static class InitialGameplaySceneBuilder
         CreateSpriteAsset(ShopSpritePath, 16, 24, new Color32(236, 136, 90, 255), new Color32(54, 38, 42, 255));
         CreateSpriteAsset(AttackSpritePath, 14, 6, new Color32(255, 245, 146, 210), new Color32(255, 185, 81, 230));
         ConfigureSpriteImporter(PlayfieldBackgroundPath, 128f);
+        ConfigureEmilSpriteImporters();
     }
 
     private static void EnsureGameplayData()
     {
         var echoShard = EnsureItem(EchoShardPath, "echo_shard", "Echo Shard", 2, LootSpritePath);
         var hearthTea = EnsureItem(HearthTeaPath, "hearth_tea", "Hearth Tea", 3, ShopSpritePath);
+        var emilSpriteSet = EnsureEmilSpriteSet();
 
         if (!File.Exists(LanternQuestPath))
         {
@@ -384,6 +392,10 @@ public static class InitialGameplaySceneBuilder
         EditorUtility.SetDirty(echoShard);
         EditorUtility.SetDirty(hearthTea);
         EditorUtility.SetDirty(questAsset);
+        if (emilSpriteSet != null)
+        {
+            EditorUtility.SetDirty(emilSpriteSet);
+        }
     }
 
     private static ItemDefinition EnsureItem(string path, string id, string displayName, int value, string spritePath)
@@ -401,6 +413,75 @@ public static class InitialGameplaySceneBuilder
         itemObject.FindProperty("icon").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
         itemObject.ApplyModifiedPropertiesWithoutUndo();
         return item;
+    }
+
+    private static CharacterSpriteSet EnsureEmilSpriteSet()
+    {
+        if (!File.Exists(EmilSpriteFolder + "front_idle.png"))
+        {
+            return null;
+        }
+
+        if (!File.Exists(EmilSpriteSetPath))
+        {
+            AssetDatabase.CreateAsset(ScriptableObject.CreateInstance<CharacterSpriteSet>(), EmilSpriteSetPath);
+        }
+
+        var spriteSet = AssetDatabase.LoadAssetAtPath<CharacterSpriteSet>(EmilSpriteSetPath);
+        var spriteSetObject = new SerializedObject(spriteSet);
+
+        SetSprite(spriteSetObject, "frontIdle", "front_idle.png");
+        SetSpriteArray(spriteSetObject, "frontWalk", "front_walk1.png", "front_walk2.png");
+        SetSprite(spriteSetObject, "frontJump", "front_jump.png");
+
+        SetSprite(spriteSetObject, "backIdle", "back_idle.png");
+        SetSpriteArray(spriteSetObject, "backWalk", "back_walk1.png", "back_walk2.png");
+        SetSprite(spriteSetObject, "backJump", "back_jump.png");
+
+        SetSprite(spriteSetObject, "sideRightIdle", "side_right_idle.png");
+        SetSpriteArray(spriteSetObject, "sideRightWalk", "side_right_walk1.png", "side_right_walk2.png");
+        SetSprite(spriteSetObject, "sideRightJump", "side_right_jump.png");
+
+        SetSprite(spriteSetObject, "sideLeftIdle", "side_left_idle.png");
+        SetSpriteArray(spriteSetObject, "sideLeftWalk", "side_left_walk1.png", "side_left_walk2.png");
+        SetSprite(spriteSetObject, "sideLeftJump", "side_left_jump.png");
+
+        spriteSetObject.ApplyModifiedPropertiesWithoutUndo();
+        return spriteSet;
+    }
+
+    private static void SetSprite(SerializedObject target, string propertyName, string fileName)
+    {
+        target.FindProperty(propertyName).objectReferenceValue = LoadEmilSprite(fileName);
+    }
+
+    private static void SetSpriteArray(SerializedObject target, string propertyName, params string[] fileNames)
+    {
+        var array = target.FindProperty(propertyName);
+        array.arraySize = fileNames.Length;
+        for (var i = 0; i < fileNames.Length; i++)
+        {
+            array.GetArrayElementAtIndex(i).objectReferenceValue = LoadEmilSprite(fileNames[i]);
+        }
+    }
+
+    private static Sprite LoadEmilSprite(string fileName)
+    {
+        return AssetDatabase.LoadAssetAtPath<Sprite>(EmilSpriteFolder + fileName);
+    }
+
+    private static void ConfigureEmilSpriteImporters()
+    {
+        if (!Directory.Exists(EmilSpriteFolder))
+        {
+            return;
+        }
+
+        var spritePaths = Directory.GetFiles(EmilSpriteFolder, "*.png", SearchOption.TopDirectoryOnly);
+        foreach (var spritePath in spritePaths)
+        {
+            ConfigureSpriteImporter(spritePath.Replace('\\', '/'), 32f);
+        }
     }
 
     private static void CreateSpriteAsset(string path, int width, int height, Color32 fill, Color32 outline)

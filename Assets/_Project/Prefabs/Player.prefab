@@ -111,8 +111,7 @@ GameObject:
   - component: {fileID: 1476196256998385100}
   - component: {fileID: 9108276643416980545}
   - component: {fileID: 1481593498649029431}
-  - component: {fileID: 3613985080219809598}
-  - component: {fileID: 2258481965428550474}
+  - component: {fileID: 5512351940892842867}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -366,7 +365,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 2048
   attackFlash: {fileID: 6305486518620940222}
---- !u!114 &3613985080219809598
+--- !u!114 &5512351940892842867
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -375,28 +374,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 6281881474313642775}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1cd4aee3acb4555b8afa55ec455ae0a, type: 3}
+  m_Script: {fileID: 11500000, guid: 92dbae3dff54b084192c162a7c92a8fe, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimationController
-  animator: {fileID: 0}
---- !u!114 &2258481965428550474
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6281881474313642775}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: af8806ce59854a52937e1b5e2a4d84f1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TopDownSpriteAnimator
-  visualsRoot: {fileID: 0}
-  spriteRenderer: {fileID: 0}
-  idleColor: {r: 0.36, g: 0.88, b: 0.65, a: 1}
-  walkColor: {r: 0.56, g: 0.95, b: 0.74, a: 1}
-  bobAmplitude: 0.045
-  bobSpeed: 11
+  m_EditorClassIdentifier: Assembly-CSharp::DirectionalSpriteAnimator
+  spriteRenderer: {fileID: 8168610102783901412}
+  spriteSet: {fileID: 11400000, guid: 5497d800d92ec21478c8b8954426cd68, type: 2}
+  fps: 8
 --- !u!1 &7786802256810029782
 GameObject:
   m_ObjectHideFlags: 0
@@ -407,7 +390,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8994687918901161058}
   - component: {fileID: 8168610102783901412}
-  - component: {fileID: 2108493605481536245}
   m_Layer: 0
   m_Name: Visuals
   m_TagString: Untagged
@@ -489,25 +471,3 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!95 &2108493605481536245
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7786802256810029782}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0

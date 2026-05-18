@@ -12,6 +12,7 @@
 .vs/
 .vscode/*.user
 .idea/
+.claude/
 *.csproj
 *.sln
 *.suo

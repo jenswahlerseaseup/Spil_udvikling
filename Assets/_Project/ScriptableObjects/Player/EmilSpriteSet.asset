@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc40f68aff370342bded066626942b7, type: 3}
+  m_Name: EmilSpriteSet
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterSpriteSet
+  frontIdle: {fileID: 927359063962277453, guid: bb24cf8264fc32e4e84446b9b5c6dfb7, type: 3}
+  frontWalk:
+  - {fileID: -2191093179552997788, guid: 15d4077871540d84dbd949f703ace6ed, type: 3}
+  - {fileID: -1430582414804028255, guid: 9ccd8f0490c7aaa45add273a4cea347a, type: 3}
+  frontJump: {fileID: -4384183201984412580, guid: be4400fa38c7dca428f4686cdb683263, type: 3}
+  backIdle: {fileID: -763670427964593466, guid: c948410bec06abb43998046a4841ff16, type: 3}
+  backWalk:
+  - {fileID: -1463358543127696355, guid: e4285734effa1cb4daec636c974f126e, type: 3}
+  - {fileID: 7343171257598103104, guid: 77301b49f6f412b4a95cebd1a727e178, type: 3}
+  backJump: {fileID: 6349597083117240235, guid: 2a7061b997d1c944b9b884c16f6f79b7, type: 3}
+  sideRightIdle: {fileID: -152683881500509688, guid: 7d0bfe9679aabf4428a5b3d3faa3550b, type: 3}
+  sideRightWalk:
+  - {fileID: 5377634769118866332, guid: 28e465b14addc064f8f6fbb07c69da94, type: 3}
+  - {fileID: -1178462440427626492, guid: dce6f3951d5091c4f8e2112dab9afe8d, type: 3}
+  sideRightJump: {fileID: -2682125911971895544, guid: e70208bcf5db38e4899b0c26127a90d2, type: 3}
+  sideLeftIdle: {fileID: -3372926192115353236, guid: c9d9029bad7a8374dad7aa9e889bf100, type: 3}
+  sideLeftWalk:
+  - {fileID: 8444929605828102076, guid: 5e6423642845ebd4ab30d2257d562cb3, type: 3}
+  - {fileID: -3228306516924156018, guid: e0bdd212e4370bd40a05a04da3f4dd6e, type: 3}
+  sideLeftJump: {fileID: -8702258366642018249, guid: 2e5d8fcf728054b4482426b1f11f1581, type: 3}

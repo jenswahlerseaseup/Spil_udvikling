@@ -46,7 +46,11 @@ public sealed class PlayerAttackController : MonoBehaviour
 
         var facing = motor.FacingDirection.sqrMagnitude > 0.01f ? motor.FacingDirection.normalized : Vector2.down;
         var center = (Vector2)transform.position + facing * range;
-        var hitCount = Physics2D.OverlapCircleNonAlloc(center, radius, HitBuffer, targetMask);
+        var filter = new ContactFilter2D();
+        filter.SetLayerMask(targetMask);
+        filter.useTriggers = true;
+
+        var hitCount = Physics2D.OverlapCircle(center, radius, filter, HitBuffer);
         for (var i = 0; i < hitCount; i++)
         {
             if (HitBuffer[i].TryGetComponent<HealthSystem>(out var health))
