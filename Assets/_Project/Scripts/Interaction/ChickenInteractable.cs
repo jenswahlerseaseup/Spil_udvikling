@@ -7,8 +7,31 @@ public sealed class ChickenInteractable : MonoBehaviour, IInteractable
     [SerializeField, Min(0)] private int mischiefOnCatch;
 
     private bool caught;
+    private bool isSubscribedToQuestUpdates;
 
     public string InteractionPrompt => caught ? string.Empty : "Fang";
+
+    private void OnEnable()
+    {
+        TrySubscribeToQuestUpdates();
+        RefreshQuestVisibility();
+    }
+
+    private void Start()
+    {
+        TrySubscribeToQuestUpdates();
+        RefreshQuestVisibility();
+    }
+
+    private void OnDisable()
+    {
+        if (QuestManager.Instance != null && isSubscribedToQuestUpdates)
+        {
+            QuestManager.Instance.QuestUpdated -= RefreshQuestVisibility;
+        }
+
+        isSubscribedToQuestUpdates = false;
+    }
 
     public void Interact(PlayerInteractor interactor)
     {
@@ -47,5 +70,34 @@ public sealed class ChickenInteractable : MonoBehaviour, IInteractable
 
         interactor.ShowMessage(string.Empty, "Fanget!");
         gameObject.SetActive(false);
+    }
+
+    private void RefreshQuestVisibility()
+    {
+        var questManager = QuestManager.Instance;
+        if (questManager == null)
+        {
+            return;
+        }
+
+        var shouldHide =
+            questManager.GetStatus(questId) == QuestState.Completed ||
+            questManager.IsReadyToComplete(questId);
+
+        if (shouldHide)
+        {
+            gameObject.SetActive(false);
+        }
+    }
+
+    private void TrySubscribeToQuestUpdates()
+    {
+        if (isSubscribedToQuestUpdates || QuestManager.Instance == null)
+        {
+            return;
+        }
+
+        QuestManager.Instance.QuestUpdated += RefreshQuestVisibility;
+        isSubscribedToQuestUpdates = true;
     }
 }

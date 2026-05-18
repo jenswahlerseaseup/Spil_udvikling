@@ -329,6 +329,7 @@ public static class InitialGameplaySceneBuilder
         collider.radius = 0.4f;
 
         chicken.AddComponent<ChickenInteractable>();
+        chicken.AddComponent<ChickenWander>();
     }
 
     private static void CreateBucket(string name, Vector3 position)
