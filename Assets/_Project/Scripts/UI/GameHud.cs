@@ -69,6 +69,10 @@ public sealed class GameHud : MonoBehaviour
                        + new string('♡', playerHealth.MaxHealth - playerHealth.CurrentHealth);
             hpLabel.text = "HP  " + hearts;
         }
+        else if (hpLabel != null && SoapboxProgress.Instance != null)
+        {
+            hpLabel.text = "Bil  rekord " + Mathf.RoundToInt(SoapboxProgress.Instance.BestDistance) + " m";
+        }
 
         if (coinsLabel != null && playerInventory != null)
             coinsLabel.text = "●  " + playerInventory.Coins + " moenter";

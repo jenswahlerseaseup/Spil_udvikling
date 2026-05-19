@@ -23,10 +23,8 @@ public static class InitialGameplaySceneBuilder
     private const string WallSpritePath = "Assets/_Project/Art/Sprites/placeholder_wall.png";
     private const string NpcSpritePath = "Assets/_Project/Art/Sprites/placeholder_npc.png";
     private const string ShrineSpritePath = "Assets/_Project/Art/Sprites/placeholder_shrine.png";
-    private const string EnemySpritePath = "Assets/_Project/Art/Sprites/placeholder_enemy.png";
     private const string LootSpritePath = "Assets/_Project/Art/Sprites/placeholder_echo_shard.png";
     private const string ShopSpritePath = "Assets/_Project/Art/Sprites/placeholder_shopkeeper.png";
-    private const string AttackSpritePath = "Assets/_Project/Art/Sprites/placeholder_attack_flash.png";
     private const string FarmSpriteFolder = "Assets/_Project/Art/Sprites/Farm/";
     private const string FarmCoopSpritePath = FarmSpriteFolder + "farm_coop.png";
     private const string FarmFenceSpritePath = FarmSpriteFolder + "wood_fence_long.png";
@@ -78,7 +76,6 @@ public static class InitialGameplaySceneBuilder
         EnsureLayer("Player", 8);
         EnsureLayer("Solid", 9);
         EnsureLayer("Interactable", 10);
-        EnsureLayer("Enemy", 11);
         EnsurePlaceholderSprites();
         EnsureGameplayData();
 
@@ -94,7 +91,6 @@ public static class InitialGameplaySceneBuilder
         CreateFarmDecorations();
         CreateNpc();
         CreateShopkeeper();
-        CreateEnemy();
         CreateFarmInteractions();
         CreateShrine();
         CreateGameplayHud();
@@ -158,13 +154,11 @@ public static class InitialGameplaySceneBuilder
 
         var inputReader = player.AddComponent<PlayerInputReader>();
         var motor = player.AddComponent<TopDownPlayerMotor>();
-        player.AddComponent<HealthSystem>();
         player.AddComponent<PlayerInventory>();
         player.AddComponent<PlayerInteractor>();
         player.AddComponent<PauseMenu>();
         player.AddComponent<InventoryPanel>();
         player.AddComponent<PlayerJump>();
-        var attack = player.AddComponent<PlayerAttackController>();
 
         var movementSettings = AssetDatabase.LoadAssetAtPath<PlayerMovementSettings>(MovementSettingsPath);
         var motorObject = new SerializedObject(motor);
@@ -184,19 +178,6 @@ public static class InitialGameplaySceneBuilder
         spriteAnimatorObject.FindProperty("spriteRenderer").objectReferenceValue = renderer;
         spriteAnimatorObject.FindProperty("spriteSet").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CharacterSpriteSet>(EmilSpriteSetPath);
         spriteAnimatorObject.ApplyModifiedPropertiesWithoutUndo();
-
-        var attackFlash = new GameObject("Attack Flash");
-        attackFlash.transform.SetParent(player.transform);
-        attackFlash.transform.localPosition = Vector3.zero;
-        var attackRenderer = attackFlash.AddComponent<SpriteRenderer>();
-        attackRenderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AttackSpritePath);
-        attackRenderer.sortingOrder = 30;
-        attackRenderer.enabled = false;
-
-        var attackObject = new SerializedObject(attack);
-        attackObject.FindProperty("targetMask").intValue = 1 << LayerMask.NameToLayer("Enemy");
-        attackObject.FindProperty("attackFlash").objectReferenceValue = attackRenderer;
-        attackObject.ApplyModifiedPropertiesWithoutUndo();
 
         return player;
     }
@@ -283,40 +264,6 @@ public static class InitialGameplaySceneBuilder
         shopObject.FindProperty("itemForSale").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDefinition>(HearthTeaPath);
         shopObject.FindProperty("price").intValue = 3;
         shopObject.ApplyModifiedPropertiesWithoutUndo();
-    }
-
-    private static void CreateEnemy()
-    {
-        var enemy = new GameObject("Shade");
-        enemy.layer = LayerMask.NameToLayer("Enemy");
-        enemy.transform.position = new Vector3(-2.8f, -1.8f, 0f);
-
-        var renderer = enemy.AddComponent<SpriteRenderer>();
-        renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(EnemySpritePath);
-        renderer.sortingOrder = 18;
-
-        var body = enemy.AddComponent<Rigidbody2D>();
-        body.gravityScale = 0f;
-        body.freezeRotation = true;
-        body.interpolation = RigidbodyInterpolation2D.Interpolate;
-
-        var collider = enemy.AddComponent<CapsuleCollider2D>();
-        collider.size = new Vector2(0.75f, 0.9f);
-
-        var health = enemy.AddComponent<HealthSystem>();
-        var healthObject = new SerializedObject(health);
-        healthObject.FindProperty("maxHealth").intValue = 3;
-        healthObject.ApplyModifiedPropertiesWithoutUndo();
-
-        enemy.AddComponent<EnemyBrain>();
-        enemy.AddComponent<ContactDamage>();
-
-        var dropper = enemy.AddComponent<LootDropper>();
-        var dropperObject = new SerializedObject(dropper);
-        dropperObject.FindProperty("item").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDefinition>(EchoShardPath);
-        dropperObject.FindProperty("lootSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(LootSpritePath);
-        dropperObject.FindProperty("coins").intValue = 2;
-        dropperObject.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void CreateFarmInteractions()
@@ -496,10 +443,8 @@ public static class InitialGameplaySceneBuilder
         CreateSpriteAsset(WallSpritePath, 16, 16, new Color32(101, 78, 93, 255), new Color32(42, 34, 48, 255));
         CreateSpriteAsset(NpcSpritePath, 16, 24, new Color32(228, 187, 102, 255), new Color32(49, 36, 42, 255));
         CreateSpriteAsset(ShrineSpritePath, 20, 20, new Color32(130, 116, 184, 255), new Color32(34, 31, 48, 255));
-        CreateSpriteAsset(EnemySpritePath, 16, 20, new Color32(88, 51, 122, 255), new Color32(22, 19, 29, 255));
         CreateSpriteAsset(LootSpritePath, 12, 12, new Color32(112, 224, 242, 255), new Color32(28, 50, 68, 255));
         CreateSpriteAsset(ShopSpritePath, 16, 24, new Color32(236, 136, 90, 255), new Color32(54, 38, 42, 255));
-        CreateSpriteAsset(AttackSpritePath, 14, 6, new Color32(255, 245, 146, 210), new Color32(255, 185, 81, 230));
         ConfigureSpriteImporter(PlayfieldBackgroundPath, 128f);
         ConfigureFarmSpriteImporters();
         ConfigureEmilSpriteImporters();

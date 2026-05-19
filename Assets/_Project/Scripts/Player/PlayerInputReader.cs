@@ -10,7 +10,6 @@ public sealed class PlayerInputReader : MonoBehaviour
     // Input is isolated from movement so menus, dialogue, cutscenes, and AI can disable or replace it cleanly.
     public event Action<Vector2> MoveChanged;
     public event Action InteractPressed;
-    public event Action AttackPressed;
     public event Action PausePressed;
     public event Action InventoryPressed;
     public event Action SavePressed;
@@ -34,14 +33,6 @@ public sealed class PlayerInputReader : MonoBehaviour
         if (IsPressed(value))
         {
             InteractPressed?.Invoke();
-        }
-    }
-
-    public void OnAttack(InputValue value)
-    {
-        if (IsPressed(value))
-        {
-            AttackPressed?.Invoke();
         }
     }
 

@@ -18,18 +18,23 @@ public static class FarmWorldBuilder
     // Sprite paths
     private const string SpriteFolder = "Assets/_Project/Art/World/";
     private const string ScenePath    = "Assets/_Project/Scenes/Gameplay.unity";
+    private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player.prefab";
 
     // Quest asset paths
     private const string AppleQuestPath    = "Assets/_Project/ScriptableObjects/Quests/AppleHarvest.asset";
     private const string ChickenQuestPath  = "Assets/_Project/ScriptableObjects/Quests/CollectChickens.asset";
     private const string AppleItemPath     = "Assets/_Project/ScriptableObjects/Items/Apple.asset";
+    private const string SoapboxPlankPath  = "Assets/_Project/ScriptableObjects/Items/SoapboxPlank.asset";
+    private const string SoapboxWheelPath  = "Assets/_Project/ScriptableObjects/Items/SoapboxWheel.asset";
+    private const string SoapboxAxlePath   = "Assets/_Project/ScriptableObjects/Items/SoapboxAxle.asset";
+    private const string SoapboxBearingPath = "Assets/_Project/ScriptableObjects/Items/SoapboxBearings.asset";
     private const string HearthTeaPath     = "Assets/_Project/ScriptableObjects/Items/HearthTea.asset";
     private const string EchoShardPath     = "Assets/_Project/ScriptableObjects/Items/EchoShard.asset";
     private const string ItemRegistryPath  = "Assets/_Project/ScriptableObjects/Items/ItemRegistry.asset";
 
     // ── Generated root names — used by both builder and cleanup ───────────────
     private static readonly string[] GeneratedRoots =
-        { "Environment", "Interactables", "NPCs", "Quest Guidance", "Farm Visual Dressing" };
+        { "Environment", "Interactables", "NPCs", "Quest Guidance", "Soapbox Run", "Farm Visual Dressing" };
 
     [MenuItem("Tools/World/Build Farm World")]
     public static void BuildFarmWorld()
@@ -37,17 +42,22 @@ public static class FarmWorldBuilder
         EnsureFolders();
         GenerateSprites();
         EnsureQuestMarkerSprite();
+        EnsureSoapboxSprites();
         ConfigureWorldSpriteImporters();
         EnsureAppleItem();
+        EnsureSoapboxItems();
         EnsureAppleHarvestQuest();
 
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        ConfigureSoapboxSystems();
 
         // Remove legacy objects (first-time run) and regenerated roots (re-run safety)
         RemoveGameObject("Collision Demo Bounds");
         RemoveGameObject("Mountain Village Playfield");
         RemoveGameObject("Gameplay HUD");
         RemoveGameObject("Old North Shrine");
+        RemoveGameObject("Shade");
+        CleanupPlayerPrefabCombat();
         ClearGeneratedRoots();
 
         BuildFloors();
@@ -56,10 +66,12 @@ public static class FarmWorldBuilder
         BuildVegetation();
         BuildFences();
         BuildPaths();
+        BuildSoapboxPrototype();
         PlaceInteractables();
         PlaceMischiefProps();
         PlaceExtraNPCs();
         RepositionGameElements();
+        RemoveCombatFromActiveScene();
         BuildQuestGuidance();
         WireAppleQuestToFarmer();
         WireAppleQuestToQuestManager();
@@ -80,10 +92,13 @@ public static class FarmWorldBuilder
     {
         EnsureFolders();
         EnsureQuestMarkerSprite();
+        EnsureSoapboxSprites();
         EnsureAppleItem();
+        EnsureSoapboxItems();
         EnsureAppleHarvestQuest();
 
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        ConfigureSoapboxSystems();
 
         // Replace legacy HUD
         RemoveGameObject("Gameplay HUD");
@@ -147,6 +162,89 @@ public static class FarmWorldBuilder
         WriteSprite(path, tex, 16f);
     }
 
+    private static void EnsureSoapboxSprites()
+    {
+        MakeSimplePropSprite("item_plank", 18, 8, new Color32(169, 113, 55, 255), new Color32(75, 45, 25, 255));
+        MakeWheelSprite("item_wheel");
+        MakeSimplePropSprite("item_axle", 18, 6, new Color32(126, 132, 138, 255), new Color32(52, 56, 63, 255));
+        MakeSimplePropSprite("item_bearings", 12, 10, new Color32(190, 194, 194, 255), new Color32(50, 55, 60, 255));
+        MakeSoapboxCarSprite();
+    }
+
+    private static void MakeWheelSprite(string name)
+    {
+        var path = SpriteFolder + name + ".png";
+        if (File.Exists(path)) return;
+
+        var tex = new Texture2D(16, 16, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+        var clear = new Color32(0, 0, 0, 0);
+        for (var y = 0; y < 16; y++)
+            for (var x = 0; x < 16; x++)
+                tex.SetPixel(x, y, clear);
+
+        var outline = new Color32(45, 39, 43, 255);
+        var rubber = new Color32(83, 82, 87, 255);
+        var hub = new Color32(207, 190, 112, 255);
+        for (var y = 2; y <= 13; y++)
+            for (var x = 2; x <= 13; x++)
+            {
+                var dx = x - 8;
+                var dy = y - 8;
+                var dist = dx * dx + dy * dy;
+                if (dist <= 36) tex.SetPixel(x, y, dist >= 28 ? outline : rubber);
+                if (dist <= 8) tex.SetPixel(x, y, hub);
+            }
+
+        tex.Apply();
+        WriteSprite(path, tex, 16f);
+    }
+
+    private static void MakeSoapboxCarSprite()
+    {
+        var path = SpriteFolder + "soapbox_car.png";
+        if (File.Exists(path)) return;
+
+        var tex = new Texture2D(48, 24, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+        var clear = new Color32(0, 0, 0, 0);
+        for (var y = 0; y < 24; y++)
+            for (var x = 0; x < 48; x++)
+                tex.SetPixel(x, y, clear);
+
+        var outline = new Color32(54, 35, 29, 255);
+        var wood = new Color32(187, 103, 54, 255);
+        var bright = new Color32(232, 151, 77, 255);
+        var wheel = new Color32(42, 42, 46, 255);
+        var hub = new Color32(223, 205, 119, 255);
+
+        for (var y = 8; y <= 14; y++)
+            for (var x = 7; x <= 39; x++)
+                tex.SetPixel(x, y, y == 8 || y == 14 || x == 7 || x == 39 ? outline : (y > 11 ? bright : wood));
+
+        for (var y = 15; y <= 19; y++)
+            for (var x = 14; x <= 27; x++)
+                tex.SetPixel(x, y, y == 19 || x == 14 || x == 27 ? outline : bright);
+
+        DrawWheel(tex, 13, 6, wheel, hub);
+        DrawWheel(tex, 34, 6, wheel, hub);
+        tex.Apply();
+        WriteSprite(path, tex, 16f);
+    }
+
+    private static void DrawWheel(Texture2D tex, int cx, int cy, Color32 wheel, Color32 hub)
+    {
+        for (var y = cy - 4; y <= cy + 4; y++)
+            for (var x = cx - 4; x <= cx + 4; x++)
+            {
+                var dx = x - cx;
+                var dy = y - cy;
+                var dist = dx * dx + dy * dy;
+                if (dist <= 16) tex.SetPixel(x, y, wheel);
+                if (dist <= 4) tex.SetPixel(x, y, hub);
+            }
+    }
+
     private static void EnsureAppleItem()
     {
         var iconPath = SpriteFolder + "item_apple.png";
@@ -206,6 +304,69 @@ public static class FarmWorldBuilder
 
         AddItemToRegistry(apple);
         AssetDatabase.SaveAssets();
+    }
+
+    private static void EnsureSoapboxItems()
+    {
+        EnsureItem(SoapboxPlankPath, "soapbox_plank", "Traebraet", 3, "item_plank");
+        EnsureItem(SoapboxWheelPath, "soapbox_wheel", "Hjul", 5, "item_wheel");
+        EnsureItem(SoapboxAxlePath, "soapbox_axle", "Aksel", 6, "item_axle");
+        EnsureItem(SoapboxBearingPath, "soapbox_bearings", "Lejer", 8, "item_bearings");
+        AssetDatabase.SaveAssets();
+    }
+
+    private static ItemDefinition EnsureItem(string assetPath, string id, string displayName, int value, string spriteName)
+    {
+        var item = AssetDatabase.LoadAssetAtPath<ItemDefinition>(assetPath);
+        if (item == null)
+        {
+            item = ScriptableObject.CreateInstance<ItemDefinition>();
+            AssetDatabase.CreateAsset(item, assetPath);
+        }
+
+        var so = new SerializedObject(item);
+        so.FindProperty("id").stringValue = id;
+        so.FindProperty("displayName").stringValue = displayName;
+        so.FindProperty("value").intValue = value;
+        so.FindProperty("icon").objectReferenceValue = LoadSprite(spriteName);
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(item);
+        AddItemToRegistry(item);
+        return item;
+    }
+
+    private static void ConfigureSoapboxSystems()
+    {
+        var systems = GameObject.Find("Core Systems");
+        if (systems == null)
+        {
+            systems = new GameObject("Core Systems");
+        }
+
+        if (systems.GetComponent<SoapboxRunController>() == null)
+        {
+            systems.AddComponent<SoapboxRunController>();
+        }
+
+        var progress = systems.GetComponent<SoapboxProgress>();
+        if (progress == null)
+        {
+            progress = systems.AddComponent<SoapboxProgress>();
+        }
+
+        var progressSo = new SerializedObject(progress);
+        progressSo.FindProperty("plankItem").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDefinition>(SoapboxPlankPath);
+        progressSo.FindProperty("wheelItem").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDefinition>(SoapboxWheelPath);
+        progressSo.FindProperty("axleItem").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDefinition>(SoapboxAxlePath);
+        progressSo.FindProperty("bearingsItem").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDefinition>(SoapboxBearingPath);
+        progressSo.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(progress);
+
+        var runController = systems.GetComponent<SoapboxRunController>();
+        var runSo = new SerializedObject(runController);
+        runSo.FindProperty("carSprite").objectReferenceValue = LoadSprite("soapbox_car");
+        runSo.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(runController);
     }
 
     private static void AddItemToRegistry(ItemDefinition item)
@@ -648,6 +809,108 @@ public static class FarmWorldBuilder
     }
 
     // -------------------------------------------------------------------------
+    // Soapbox prototype - top-down garage + hidden side-view run lane
+    // -------------------------------------------------------------------------
+
+    private static void BuildSoapboxPrototype()
+    {
+        var interactableRoot = GetOrCreate("Interactables/Soapbox");
+        var layer = LayerMask.NameToLayer("Interactable");
+
+        PlaceGarage(interactableRoot, layer, new Vector2(-18.4f, -6.7f));
+        PlaceRunStarter(interactableRoot, layer, new Vector2(0f, -12.8f));
+        PlaceSoapboxPart(interactableRoot, "Part_Plank_A", SoapboxPlankPath, "item_plank", new Vector2(-21f, -7.2f));
+        PlaceSoapboxPart(interactableRoot, "Part_Plank_B", SoapboxPlankPath, "item_plank", new Vector2(8.2f, -2.6f));
+        PlaceSoapboxPart(interactableRoot, "Part_Wheel_A", SoapboxWheelPath, "item_wheel", new Vector2(3.8f, -5.1f));
+        PlaceSoapboxPart(interactableRoot, "Part_Wheel_B", SoapboxWheelPath, "item_wheel", new Vector2(17.2f, 1.8f));
+        PlaceSoapboxPart(interactableRoot, "Part_Axle", SoapboxAxlePath, "item_axle", new Vector2(-12.4f, 1.2f));
+        PlaceSoapboxPart(interactableRoot, "Part_Bearings", SoapboxBearingPath, "item_bearings", new Vector2(20.8f, 7.4f));
+
+        var runRoot = GetOrCreate("Soapbox Run");
+        var solid = LayerMask.NameToLayer("Solid");
+        MakeRunPlatform(runRoot, "StartHill", solid, new Vector2(-58f, -33.2f), new Vector2(16f, 0.6f), -9f);
+        MakeRunPlatform(runRoot, "StraightA", solid, new Vector2(-42f, -34.6f), new Vector2(19f, 0.6f), 0f);
+        MakeRunPlatform(runRoot, "DipDown", solid, new Vector2(-23f, -35.6f), new Vector2(18f, 0.6f), -6f);
+        MakeRunPlatform(runRoot, "BumpyMiddle", solid, new Vector2(-4f, -35.2f), new Vector2(17f, 0.6f), 7f);
+        MakeRunPlatform(runRoot, "LongFlat", solid, new Vector2(15f, -34.8f), new Vector2(22f, 0.6f), 0f);
+        MakeRunPlatform(runRoot, "LateHill", solid, new Vector2(38f, -35.6f), new Vector2(18f, 0.6f), -8f);
+    }
+
+    private static void PlaceGarage(Transform parent, int layer, Vector2 pos)
+    {
+        var go = new GameObject("Soapbox Garage");
+        go.layer = layer;
+        go.transform.SetParent(parent);
+        go.transform.position = new Vector3(pos.x, pos.y, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = LoadSprite("prop_shed");
+        sr.sortingOrder = 12;
+        AddYSort(sr, false, -0.5f);
+
+        var col = go.AddComponent<BoxCollider2D>();
+        col.isTrigger = true;
+        col.size = new Vector2(2.2f, 1.5f);
+
+        go.AddComponent<SoapboxGarageInteractable>();
+    }
+
+    private static void PlaceRunStarter(Transform parent, int layer, Vector2 pos)
+    {
+        var go = new GameObject("Soapbox Start Ramp");
+        go.layer = layer;
+        go.transform.SetParent(parent);
+        go.transform.position = new Vector3(pos.x, pos.y, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = LoadSprite("soapbox_car");
+        sr.sortingOrder = 12;
+        AddYSort(sr, false, -0.35f);
+
+        var col = go.AddComponent<BoxCollider2D>();
+        col.isTrigger = true;
+        col.size = new Vector2(2.2f, 1.2f);
+
+        go.AddComponent<SoapboxRunStarter>();
+    }
+
+    private static void PlaceSoapboxPart(Transform parent, string name, string itemPath, string spriteName, Vector2 pos)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent);
+        go.transform.position = new Vector3(pos.x, pos.y, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = LoadSprite(spriteName);
+        sr.sortingOrder = 12;
+        AddYSort(sr, false, 0f);
+
+        var col = go.AddComponent<CircleCollider2D>();
+        col.isTrigger = true;
+        col.radius = 0.35f;
+
+        go.AddComponent<PickupItem>().Configure(AssetDatabase.LoadAssetAtPath<ItemDefinition>(itemPath), 1, 0);
+    }
+
+    private static void MakeRunPlatform(Transform parent, string name, int layer, Vector2 pos, Vector2 size, float angle)
+    {
+        var go = new GameObject(name);
+        go.layer = layer;
+        go.transform.SetParent(parent);
+        go.transform.position = new Vector3(pos.x, pos.y, 0f);
+        go.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = LoadSprite("floor_road");
+        sr.sortingOrder = -5;
+        var spriteSize = sr.sprite != null ? sr.sprite.bounds.size : Vector3.one;
+        go.transform.localScale = new Vector3(size.x / spriteSize.x, size.y / spriteSize.y, 1f);
+
+        var col = go.AddComponent<BoxCollider2D>();
+        col.size = spriteSize;
+    }
+
+    // -------------------------------------------------------------------------
     // Extra mischief opportunities
     // -------------------------------------------------------------------------
 
@@ -744,7 +1007,6 @@ public static class FarmWorldBuilder
         // Farmer NPC stays in farmyard hub
         MoveGameObject("Gaardejer - Chicken Quest", new Vector3(3f, -1f, 0f));
         MoveGameObject("Pip - Travelling Tinker", new Vector3(13f, -0.6f, 0f));
-        MoveGameObject("Shade", new Vector3(6.5f, 13.2f, 0f));
 
         // Chickens spread across zones so player must explore
         MoveGameObject("Chicken A", new Vector3(-14f, -5f, 0f));  // barn area
@@ -761,7 +1023,6 @@ public static class FarmWorldBuilder
         AddYSortToExisting("Player", true, -0.45f);
         AddYSortToExisting("Gaardejer - Chicken Quest", true, -0.35f);
         AddYSortToExisting("Pip - Travelling Tinker", true, -0.35f);
-        AddYSortToExisting("Shade", true, -0.35f);
         AddYSortToExisting("Chicken A", true, -0.25f);
         AddYSortToExisting("Chicken B", true, -0.25f);
         AddYSortToExisting("Chicken C", true, -0.25f);
@@ -789,6 +1050,64 @@ public static class FarmWorldBuilder
         {
             AddYSort(renderer, dynamicSort, footOffsetY);
         }
+    }
+
+    private static void RemoveCombatFromActiveScene()
+    {
+        RemoveGameObject("Shade");
+
+        var player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            return;
+        }
+
+        var attackFlash = player.transform.Find("Attack Flash");
+        if (attackFlash != null)
+        {
+            Undo.DestroyObjectImmediate(attackFlash.gameObject);
+        }
+
+        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(player);
+        foreach (Transform child in player.transform)
+        {
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(child.gameObject);
+        }
+
+        var health = player.GetComponent<HealthSystem>();
+        if (health != null)
+        {
+            Undo.DestroyObjectImmediate(health);
+        }
+    }
+
+    private static void CleanupPlayerPrefabCombat()
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
+        if (prefab == null)
+        {
+            return;
+        }
+
+        var attackFlash = prefab.transform.Find("Attack Flash");
+        if (attackFlash != null)
+        {
+            Object.DestroyImmediate(attackFlash.gameObject, true);
+        }
+
+        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(prefab);
+        foreach (Transform child in prefab.transform)
+        {
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(child.gameObject);
+        }
+
+        var health = prefab.GetComponent<HealthSystem>();
+        if (health != null)
+        {
+            Object.DestroyImmediate(health, true);
+        }
+
+        PrefabUtility.SavePrefabAsset(prefab);
     }
 
     private static void BuildQuestGuidance()
@@ -1208,7 +1527,7 @@ public static class FarmWorldBuilder
             return 128f;
         }
 
-        if (spriteName.StartsWith("item_"))
+        if (spriteName.StartsWith("item_") || spriteName.StartsWith("soapbox_"))
         {
             return 16f;
         }
