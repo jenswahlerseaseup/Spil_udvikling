@@ -4,11 +4,13 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
 {
     [SerializeField] private Sprite carSprite;
     [SerializeField] private Vector2 runStart = new(-60f, -31f);
-    [SerializeField] private Bounds runCameraBounds = new(new Vector3(-30f, -30f, 0f), new Vector3(90f, 24f, 0f));
-    [SerializeField, Min(1f)] private float minimumRunTime = 3f;
-    [SerializeField, Min(0f)] private float stopSpeed = 0.45f;
+    [SerializeField] private Bounds runCameraBounds = new(new Vector3(15f, -32f, 0f), new Vector3(165f, 24f, 0f));
+    [SerializeField, Min(1f)] private float minimumRunTime = 2.5f;
+    [SerializeField, Min(0f)] private float stopSpeed = 0.35f;
+    [SerializeField, Min(0f)] private float jumpImpulse = 6.2f;
+    [SerializeField, Min(1f)] private float runBoostMultiplier = 1.35f;
+    [SerializeField] private float failY = -45f;
 
-    private PlayerInteractor activeInteractor;
     private PlayerInputReader inputReader;
     private GameObject player;
     private Rigidbody2D playerBody;
@@ -21,6 +23,7 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
     private SoapboxStats currentStats;
     private float startX;
     private float runStartTime;
+    private bool jumpQueued;
     private bool running;
 
     public bool IsRunning => running;
@@ -32,7 +35,6 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
             return;
         }
 
-        activeInteractor = interactor;
         player = interactor.gameObject;
         inputReader = player.GetComponent<PlayerInputReader>();
         playerBody = player.GetComponent<Rigidbody2D>();
@@ -45,6 +47,11 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
             ? SoapboxProgress.Instance.GetStats(interactor.Inventory)
             : new SoapboxStats { acceleration = 9f, topSpeed = 8f, stability = 1f, weight = 1f };
 
+        if (inputReader != null)
+        {
+            inputReader.JumpPressed += OnJumpPressed;
+        }
+
         SetPlayerExplorationEnabled(false);
         SpawnCar();
         FocusCameraOn(car.transform);
@@ -52,7 +59,7 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
         running = true;
         runStartTime = Time.time;
         startX = car.transform.position.x;
-        GameHud.Instance?.ShowNotification("Hold hoejre for fart. Hop over bump med mellemrum.", 3f);
+        GameHud.Instance?.ShowNotification("Hold hoejre for fart. Shift giver ekstra skub. Space hopper.", 3f);
     }
 
     private void FixedUpdate()
@@ -64,17 +71,27 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
 
         var input = inputReader.MoveInput;
         var push = Mathf.Clamp01(input.x);
+        var boost = inputReader.RunHeld ? runBoostMultiplier : 1f;
         var targetSpeed = currentStats.topSpeed;
         if (carBody.linearVelocity.x < targetSpeed)
         {
-            carBody.AddForce(Vector2.right * (currentStats.acceleration * push / currentStats.weight), ForceMode2D.Force);
+            carBody.AddForce(Vector2.right * (currentStats.acceleration * push * boost / currentStats.weight), ForceMode2D.Force);
+        }
+
+        if (jumpQueued)
+        {
+            jumpQueued = false;
+            if (IsCarGrounded())
+            {
+                carBody.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
+            }
         }
 
         var stabilizer = -carBody.angularVelocity * currentStats.stability * 0.02f;
         carBody.AddTorque(stabilizer, ForceMode2D.Force);
 
         var elapsed = Time.time - runStartTime;
-        if (elapsed > minimumRunTime && carBody.linearVelocity.magnitude < stopSpeed)
+        if (elapsed > minimumRunTime && (carBody.linearVelocity.magnitude < stopSpeed || carBody.position.y < failY))
         {
             EndRun();
         }
@@ -90,7 +107,8 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
         var distance = Mathf.Max(0f, car.transform.position.x - startX);
         if (distance > 0f)
         {
-            GameHud.Instance?.ShowInteractionPrompt("Distance: " + Mathf.RoundToInt(distance) + " m");
+            var best = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.BestDistance : 0f;
+            GameHud.Instance?.ShowSoapboxRun(distance, carBody != null ? carBody.linearVelocity.magnitude : 0f, best, currentStats);
         }
     }
 
@@ -106,7 +124,13 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
         car = null;
         carBody = null;
         running = false;
-        GameHud.Instance?.ShowInteractionPrompt(null);
+        jumpQueued = false;
+        GameHud.Instance?.HideSoapboxRun();
+
+        if (inputReader != null)
+        {
+            inputReader.JumpPressed -= OnJumpPressed;
+        }
 
         if (player != null)
         {
@@ -122,6 +146,31 @@ public sealed class SoapboxRunController : Singleton<SoapboxRunController>
         {
             FocusCameraOn(player.transform);
         }
+    }
+
+    private void OnJumpPressed()
+    {
+        if (running)
+        {
+            jumpQueued = true;
+        }
+    }
+
+    private bool IsCarGrounded()
+    {
+        if (car == null)
+        {
+            return false;
+        }
+
+        var hit = Physics2D.BoxCast(
+            car.transform.position + Vector3.down * 0.35f,
+            new Vector2(1.15f, 0.12f),
+            car.transform.eulerAngles.z,
+            Vector2.down,
+            0.08f,
+            LayerMask.GetMask("Solid"));
+        return hit.collider != null;
     }
 
     private void SpawnCar()

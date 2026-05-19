@@ -37,6 +37,12 @@ public sealed class SoapboxProgress : Singleton<SoapboxProgress>
         BestDistance = Mathf.Max(BestDistance, distance);
     }
 
+    public void LoadState(float bestDistance, int runCount)
+    {
+        BestDistance = Mathf.Max(0f, bestDistance);
+        RunCount = Mathf.Max(0, runCount);
+    }
+
     public string GetBuildSummary(PlayerInventory inventory)
     {
         var stats = GetStats(inventory);
@@ -47,7 +53,8 @@ public sealed class SoapboxProgress : Singleton<SoapboxProgress>
 
         return "Bil klar: fart " + Mathf.RoundToInt(stats.topSpeed) +
                ", acceleration " + Mathf.RoundToInt(stats.acceleration) +
-               ", stabilitet " + Mathf.RoundToInt(stats.stability * 10f) + ".";
+               ", stabilitet " + Mathf.RoundToInt(stats.stability * 10f) +
+               ". Rekord: " + Mathf.RoundToInt(BestDistance) + " m.";
     }
 
     private static int Count(PlayerInventory inventory, ItemDefinition item)

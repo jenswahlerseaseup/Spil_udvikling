@@ -19,6 +19,10 @@ public sealed class GameHud : MonoBehaviour
     private TextMeshProUGUI questTitleLabel;
     private TextMeshProUGUI questProgressLabel;
     private TextMeshProUGUI interactionPromptLabel;
+    private CanvasGroup     soapboxRunGroup;
+    private TextMeshProUGUI soapboxDistanceLabel;
+    private TextMeshProUGUI soapboxSpeedLabel;
+    private TextMeshProUGUI soapboxStatsLabel;
     private CanvasGroup     notificationGroup;
     private TextMeshProUGUI notificationLabel;
 
@@ -97,6 +101,26 @@ public sealed class GameHud : MonoBehaviour
         if (notificationLabel == null) return;
         if (notificationRoutine != null) StopCoroutine(notificationRoutine);
         notificationRoutine = StartCoroutine(FadeNotification(text, displayDuration));
+    }
+
+    public void ShowSoapboxRun(float distance, float speed, float bestDistance, SoapboxStats stats)
+    {
+        if (soapboxRunGroup == null) return;
+        soapboxRunGroup.gameObject.SetActive(true);
+        soapboxRunGroup.alpha = 1f;
+
+        var displayBest = Mathf.Max(bestDistance, distance);
+        soapboxDistanceLabel.text = "Distance  " + Mathf.RoundToInt(distance) + " m  /  rekord " + Mathf.RoundToInt(displayBest) + " m";
+        soapboxSpeedLabel.text = "Fart  " + Mathf.RoundToInt(speed * 10f) + " km/t";
+        soapboxStatsLabel.text = "Bil  top " + Mathf.RoundToInt(stats.topSpeed) +
+                                 "  acc " + Mathf.RoundToInt(stats.acceleration) +
+                                 "  stabilitet " + Mathf.RoundToInt(stats.stability * 10f);
+    }
+
+    public void HideSoapboxRun()
+    {
+        if (soapboxRunGroup == null) return;
+        soapboxRunGroup.gameObject.SetActive(false);
     }
 
     // ── Events ─────────────────────────────────────────────────────────────────
@@ -217,6 +241,23 @@ public sealed class GameHud : MonoBehaviour
             new Color(0.92f, 0.96f, 0.80f), TextAlignmentOptions.Center, font);
         SetLabelWidth(interactionPromptLabel, 520);
         promptBg.gameObject.SetActive(false);
+
+        var soapboxBg = MakePanel(root, "SoapboxRun",
+            new Vector2(0.5f, 1), new Vector2(0.5f, 1),
+            new Vector2(-270, -102), new Vector2(540, 82),
+            new Color(0f, 0f, 0f, 0.58f));
+
+        soapboxRunGroup = soapboxBg.gameObject.AddComponent<CanvasGroup>();
+        soapboxDistanceLabel = MakeLabel(soapboxBg, "SoapboxDistance", new Vector2(12, -8), 22,
+            new Color(1f, 0.92f, 0.55f), TextAlignmentOptions.Left, font);
+        soapboxSpeedLabel = MakeLabel(soapboxBg, "SoapboxSpeed", new Vector2(12, -34), 18,
+            new Color(0.73f, 0.9f, 1f), TextAlignmentOptions.Left, font);
+        soapboxStatsLabel = MakeLabel(soapboxBg, "SoapboxStats", new Vector2(12, -58), 16,
+            new Color(0.82f, 0.92f, 0.76f), TextAlignmentOptions.Left, font);
+        SetLabelWidth(soapboxDistanceLabel, 516);
+        SetLabelWidth(soapboxSpeedLabel, 516);
+        SetLabelWidth(soapboxStatsLabel, 516);
+        soapboxBg.gameObject.SetActive(false);
 
         // ── Notification toast — centre ────────────────────────────────────────
         var notifBg = MakePanel(root, "Notification",

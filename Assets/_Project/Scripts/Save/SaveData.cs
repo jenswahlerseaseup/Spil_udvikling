@@ -11,6 +11,8 @@ public sealed class SaveData
     public float  playerY;
     public int    coins;
     public int    mischiefPoints;
+    public float  soapboxBestDistance;
+    public int    soapboxRunCount;
     public float  playTimeSeconds;
     public string timestamp;
 

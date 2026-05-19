@@ -365,6 +365,13 @@ public static class FarmWorldBuilder
         var runController = systems.GetComponent<SoapboxRunController>();
         var runSo = new SerializedObject(runController);
         runSo.FindProperty("carSprite").objectReferenceValue = LoadSprite("soapbox_car");
+        runSo.FindProperty("runStart").vector2Value = new Vector2(-60f, -31f);
+        runSo.FindProperty("runCameraBounds").boundsValue = new Bounds(new Vector3(15f, -32f, 0f), new Vector3(165f, 24f, 0f));
+        runSo.FindProperty("minimumRunTime").floatValue = 2.5f;
+        runSo.FindProperty("stopSpeed").floatValue = 0.35f;
+        runSo.FindProperty("jumpImpulse").floatValue = 6.2f;
+        runSo.FindProperty("runBoostMultiplier").floatValue = 1.35f;
+        runSo.FindProperty("failY").floatValue = -45f;
         runSo.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(runController);
     }
@@ -834,6 +841,9 @@ public static class FarmWorldBuilder
         MakeRunPlatform(runRoot, "BumpyMiddle", solid, new Vector2(-4f, -35.2f), new Vector2(17f, 0.6f), 7f);
         MakeRunPlatform(runRoot, "LongFlat", solid, new Vector2(15f, -34.8f), new Vector2(22f, 0.6f), 0f);
         MakeRunPlatform(runRoot, "LateHill", solid, new Vector2(38f, -35.6f), new Vector2(18f, 0.6f), -8f);
+        MakeRunPlatform(runRoot, "SpeedValley", solid, new Vector2(57f, -36.8f), new Vector2(20f, 0.6f), 5f);
+        MakeRunPlatform(runRoot, "JumpTable", solid, new Vector2(78f, -35.4f), new Vector2(14f, 0.6f), -3f);
+        MakeRunPlatform(runRoot, "FinalRoll", solid, new Vector2(96f, -35.8f), new Vector2(24f, 0.6f), 0f);
     }
 
     private static void PlaceGarage(Transform parent, int layer, Vector2 pos)

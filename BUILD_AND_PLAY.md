@@ -22,7 +22,7 @@ Buildet bliver lavet her:
 
 - Move: WASD, piletaster eller gamepad left stick
 - Interact: E eller gamepad south button
-- Run / skub bilen: hold Shift eller hold hoejre under saebekasse-run
+- Run / skub bilen: hold hoejre under saebekasse-run. Hold Shift for ekstra skub
 - Jump: Space eller gamepad south button
 - Inventory: Tab eller gamepad north button
 - Pause: Escape eller gamepad start
@@ -32,7 +32,8 @@ Buildet bliver lavet her:
 1. Find dele rundt paa gaarden: traebraedder, hjul, aksel og lejer.
 2. Gaa til **Soapbox Garage** ved skuret for at se bilens status.
 3. Gaa til **Soapbox Start Ramp** ved sydvejen og tryk **E**.
-4. I side-view run: hold hoejre for fart. Maalet er at komme saa langt som muligt.
+4. I side-view run: hold hoejre for fart, Shift for ekstra skub, og Space for at hoppe over bump. Maalet er at komme saa langt som muligt.
+5. Din bedste distance gemmes sammen med save-filen.
 
 ## Hvis Noget Ikke Virker
 

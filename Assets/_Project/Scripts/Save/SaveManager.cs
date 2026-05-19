@@ -60,6 +60,8 @@ public sealed class SaveManager : Singleton<SaveManager>
             playerY = player != null ? player.position.y : 0f,
             coins = player?.GetComponent<PlayerInventory>()?.Coins ?? 0,
             mischiefPoints = MischiefSystem.Instance?.Points ?? 0,
+            soapboxBestDistance = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.BestDistance : 0f,
+            soapboxRunCount = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.RunCount : 0,
             playTimeSeconds = Time.realtimeSinceStartup,
             timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
             items = CaptureItems(player?.GetComponent<PlayerInventory>()),
@@ -193,6 +195,7 @@ public sealed class SaveManager : Singleton<SaveManager>
         }
 
         MischiefSystem.Instance?.LoadState(data.mischiefPoints);
+        SoapboxProgress.Instance?.LoadState(data.soapboxBestDistance, data.soapboxRunCount);
         QuestManager.Instance?.LoadSaveEntries(data.quests);
     }
 
