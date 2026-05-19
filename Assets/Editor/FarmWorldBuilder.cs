@@ -22,6 +22,7 @@ public static class FarmWorldBuilder
     // Quest asset paths
     private const string AppleQuestPath    = "Assets/_Project/ScriptableObjects/Quests/AppleHarvest.asset";
     private const string ChickenQuestPath  = "Assets/_Project/ScriptableObjects/Quests/CollectChickens.asset";
+    private const string AppleItemPath     = "Assets/_Project/ScriptableObjects/Items/Apple.asset";
     private const string HearthTeaPath     = "Assets/_Project/ScriptableObjects/Items/HearthTea.asset";
     private const string EchoShardPath     = "Assets/_Project/ScriptableObjects/Items/EchoShard.asset";
     private const string ItemRegistryPath  = "Assets/_Project/ScriptableObjects/Items/ItemRegistry.asset";
@@ -36,6 +37,7 @@ public static class FarmWorldBuilder
         EnsureFolders();
         GenerateSprites();
         ConfigureWorldSpriteImporters();
+        EnsureAppleItem();
         EnsureAppleHarvestQuest();
 
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
@@ -75,6 +77,7 @@ public static class FarmWorldBuilder
     public static void PatchSceneComponents()
     {
         EnsureFolders();
+        EnsureAppleItem();
         EnsureAppleHarvestQuest();
 
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
@@ -103,6 +106,91 @@ public static class FarmWorldBuilder
     // -------------------------------------------------------------------------
     // Apple harvest quest
     // -------------------------------------------------------------------------
+
+    private static void EnsureAppleItem()
+    {
+        var iconPath = SpriteFolder + "item_apple.png";
+        if (!File.Exists(iconPath))
+        {
+            var tex = new Texture2D(16, 16, TextureFormat.RGBA32, false);
+            tex.filterMode = FilterMode.Point;
+            var clear = new Color32(0, 0, 0, 0);
+            for (var y = 0; y < 16; y++)
+                for (var x = 0; x < 16; x++)
+                    tex.SetPixel(x, y, clear);
+
+            var red = new Color32(205, 63, 59, 255);
+            var darkRed = new Color32(122, 37, 43, 255);
+            var shine = new Color32(246, 130, 105, 255);
+            var leaf = new Color32(68, 148, 72, 255);
+            var stem = new Color32(91, 61, 33, 255);
+
+            for (var y = 4; y <= 12; y++)
+                for (var x = 4; x <= 12; x++)
+                {
+                    var dx = x - 8;
+                    var dy = y - 8;
+                    if (dx * dx + dy * dy <= 22)
+                        tex.SetPixel(x, y, red);
+                }
+
+            tex.SetPixel(6, 11, darkRed);
+            tex.SetPixel(5, 9, darkRed);
+            tex.SetPixel(10, 5, darkRed);
+            tex.SetPixel(7, 10, shine);
+            tex.SetPixel(8, 11, shine);
+            tex.SetPixel(8, 13, stem);
+            tex.SetPixel(9, 13, stem);
+            tex.SetPixel(10, 12, leaf);
+            tex.SetPixel(11, 12, leaf);
+            tex.Apply();
+            WriteSprite(iconPath, tex, 16f);
+            AssetDatabase.ImportAsset(iconPath);
+        }
+
+        var apple = AssetDatabase.LoadAssetAtPath<ItemDefinition>(AppleItemPath);
+        if (apple == null)
+        {
+            apple = ScriptableObject.CreateInstance<ItemDefinition>();
+            AssetDatabase.CreateAsset(apple, AppleItemPath);
+        }
+
+        var appleIcon = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
+        var so = new SerializedObject(apple);
+        so.FindProperty("id").stringValue = "apple";
+        so.FindProperty("displayName").stringValue = "Aeble";
+        so.FindProperty("value").intValue = 2;
+        so.FindProperty("icon").objectReferenceValue = appleIcon;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(apple);
+
+        AddItemToRegistry(apple);
+        AssetDatabase.SaveAssets();
+    }
+
+    private static void AddItemToRegistry(ItemDefinition item)
+    {
+        var registry = AssetDatabase.LoadAssetAtPath<ItemRegistry>(ItemRegistryPath);
+        if (registry == null || item == null)
+        {
+            return;
+        }
+
+        var so = new SerializedObject(registry);
+        var items = so.FindProperty("items");
+        for (var i = 0; i < items.arraySize; i++)
+        {
+            if (items.GetArrayElementAtIndex(i).objectReferenceValue == item)
+            {
+                return;
+            }
+        }
+
+        items.InsertArrayElementAtIndex(items.arraySize);
+        items.GetArrayElementAtIndex(items.arraySize - 1).objectReferenceValue = item;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        EditorUtility.SetDirty(registry);
+    }
 
     private static void EnsureAppleHarvestQuest()
     {
@@ -206,12 +294,17 @@ public static class FarmWorldBuilder
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite       = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + "tree_apple.png");
         sr.sortingOrder = 15;
+        AddYSort(sr, true, -0.55f);
 
         var col     = go.AddComponent<CircleCollider2D>();
         col.isTrigger = true;
         col.radius    = 0.7f;
 
-        go.AddComponent<ShakeableTree>();
+        var tree = go.AddComponent<ShakeableTree>();
+        var so = new SerializedObject(tree);
+        so.FindProperty("appleItem").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ItemDefinition>(AppleItemPath);
+        so.FindProperty("pickupSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + "item_apple.png");
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     private static void PlaceSign(Transform parent, string name, int layer, Vector2 pos, string text)
@@ -224,6 +317,7 @@ public static class FarmWorldBuilder
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite       = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + "prop_signpost.png");
         sr.sortingOrder = 5;
+        AddYSort(sr, false, -0.25f);
 
         var col     = go.AddComponent<BoxCollider2D>();
         col.isTrigger = true;
@@ -381,11 +475,10 @@ public static class FarmWorldBuilder
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = LoadSprite(spriteName);
         sr.sortingOrder = sortOrder;
+        AddYSort(sr, false, -colliderSize.y * 0.5f);
 
-        // Keep sprite at natural 1-unit-per-tile scale; only collider covers the base.
-        var col = go.AddComponent<BoxCollider2D>();
-        col.size = colliderSize;
-        col.offset = new Vector2(0f, -colliderSize.y * 0.1f);
+        // Only the object's foot/base blocks the player; roofs and treetops should not.
+        AddFootprintCollider(go, sr, colliderSize);
     }
 
     // -------------------------------------------------------------------------
@@ -449,6 +542,7 @@ public static class FarmWorldBuilder
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = LoadSprite(spriteName);
         sr.sortingOrder = sortOrder;
+        AddYSort(sr, false, 0f);
         return go;
     }
 
@@ -482,6 +576,7 @@ public static class FarmWorldBuilder
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite = LoadSprite(horizontal ? "decor_fence_h" : "decor_fence_v");
         sr.sortingOrder = 5;
+        AddYSort(sr, false, 0f);
 
         var col = go.AddComponent<BoxCollider2D>();
         col.size = horizontal ? new Vector2(2f, 0.3f) : new Vector2(0.3f, 2f);
@@ -542,6 +637,7 @@ public static class FarmWorldBuilder
         var sr = go.AddComponent<SpriteRenderer>();
         sr.sprite       = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + spriteName + ".png");
         sr.sortingOrder = 6;
+        AddYSort(sr, false, -0.2f);
 
         var col     = go.AddComponent<BoxCollider2D>();
         col.isTrigger = true;
@@ -587,6 +683,7 @@ public static class FarmWorldBuilder
         sr.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(
             "Assets/_Project/Art/Sprites/placeholder_npc.png");
         sr.sortingOrder = 15;
+        AddYSort(sr, true, -0.35f);
 
         var col  = go.AddComponent<BoxCollider2D>();
         col.size = new Vector2(0.75f, 0.95f);
@@ -621,6 +718,14 @@ public static class FarmWorldBuilder
         const float spawnX = 0f;
         const float spawnY = -4f;
         MoveGameObject("Player", new Vector3(spawnX, spawnY, 0f));
+        AddYSortToExisting("Player", true, -0.45f);
+        AddYSortToExisting("Gaardejer - Chicken Quest", true, -0.35f);
+        AddYSortToExisting("Pip - Travelling Tinker", true, -0.35f);
+        AddYSortToExisting("Shade", true, -0.35f);
+        AddYSortToExisting("Chicken A", true, -0.25f);
+        AddYSortToExisting("Chicken B", true, -0.25f);
+        AddYSortToExisting("Chicken C", true, -0.25f);
+        AddYSortToExisting("Loose Bucket", false, -0.15f);
 
         // Spawn point marker
         if (GameObject.Find("Player Spawn Point") == null)
@@ -628,6 +733,21 @@ public static class FarmWorldBuilder
             var sp = new GameObject("Player Spawn Point");
             sp.transform.position = new Vector3(spawnX, spawnY, 0f);
             sp.AddComponent<PlayerSpawnPoint>();
+        }
+    }
+
+    private static void AddYSortToExisting(string name, bool dynamicSort, float footOffsetY)
+    {
+        var go = GameObject.Find(name);
+        if (go == null)
+        {
+            return;
+        }
+
+        var renderer = go.GetComponent<SpriteRenderer>() ?? go.GetComponentInChildren<SpriteRenderer>();
+        if (renderer != null)
+        {
+            AddYSort(renderer, dynamicSort, footOffsetY);
         }
     }
 
@@ -861,6 +981,37 @@ public static class FarmWorldBuilder
         return AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + name + ".png");
     }
 
+    private static void AddYSort(SpriteRenderer renderer, bool dynamicSort, float footOffsetY)
+    {
+        if (renderer == null)
+        {
+            return;
+        }
+
+        var sorter = renderer.GetComponent<AutoYSort2D>();
+        if (sorter == null)
+        {
+            sorter = renderer.gameObject.AddComponent<AutoYSort2D>();
+        }
+
+        sorter.Configure(5000, 100, footOffsetY, dynamicSort);
+        EditorUtility.SetDirty(sorter);
+    }
+
+    private static void AddFootprintCollider(GameObject go, SpriteRenderer renderer, Vector2 colliderSize)
+    {
+        var col = go.AddComponent<BoxCollider2D>();
+        col.size = colliderSize;
+
+        if (renderer == null || renderer.sprite == null)
+        {
+            return;
+        }
+
+        var bounds = renderer.sprite.bounds;
+        col.offset = new Vector2(0f, bounds.min.y + colliderSize.y * 0.5f);
+    }
+
     private static Transform GetOrCreate(string hierarchyPath)
     {
         var parts  = hierarchyPath.Split('/');
@@ -927,6 +1078,11 @@ public static class FarmWorldBuilder
         if (spriteName.StartsWith("floor_"))
         {
             return 128f;
+        }
+
+        if (spriteName.StartsWith("item_"))
+        {
+            return 16f;
         }
 
         if (spriteName.StartsWith("tree_"))

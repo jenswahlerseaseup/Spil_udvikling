@@ -10,6 +10,9 @@ public sealed class ShakeableTree : MonoBehaviour, IInteractable
 {
     [SerializeField] private string questId         = "apple_harvest";
     [SerializeField] private int    mischiefOnShake = 0;
+    [SerializeField] private ItemDefinition appleItem;
+    [SerializeField] private Sprite pickupSprite;
+    [SerializeField] private Vector2 dropOffset = new(0.15f, -0.55f);
 
     private bool shaken;
 
@@ -36,15 +39,43 @@ public sealed class ShakeableTree : MonoBehaviour, IInteractable
 
         shaken = true;
         qm.RecordProgress(questId);
+        DropApplePickup();
 
         var data = qm.GetData(questId);
         var caught = data?.StepProgress ?? 0;
-        interactor.ShowMessage(string.Empty, "Pluds! Et aeble falder ned. (" + caught + " / 3)");
+        var progressText = qm.IsReadyToComplete(questId)
+            ? "Vend tilbage til gaardejeren."
+            : "(" + caught + " / 3)";
+        interactor.ShowMessage(string.Empty, "Pluds! Et aeble falder ned. " + progressText);
 
         if (mischiefOnShake > 0)
             MischiefSystem.Instance?.AddMischief(mischiefOnShake, "Rystede aebletrae");
 
         StartCoroutine(WobbleAnimation());
+    }
+
+    private void DropApplePickup()
+    {
+        if (appleItem == null)
+        {
+            return;
+        }
+
+        var pickup = new GameObject("Fallen Apple");
+        pickup.transform.position = transform.position + (Vector3)dropOffset;
+
+        var renderer = pickup.AddComponent<SpriteRenderer>();
+        renderer.sprite = pickupSprite != null ? pickupSprite : appleItem.Icon;
+        renderer.sortingOrder = 20;
+
+        var sorter = pickup.AddComponent<AutoYSort2D>();
+        sorter.Configure(5000, 100, 0f, true);
+
+        var collider = pickup.AddComponent<CircleCollider2D>();
+        collider.isTrigger = true;
+        collider.radius = 0.25f;
+
+        pickup.AddComponent<PickupItem>().Configure(appleItem, 1, 0);
     }
 
     private IEnumerator WobbleAnimation()
