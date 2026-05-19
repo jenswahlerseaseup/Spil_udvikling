@@ -13,6 +13,12 @@ public sealed class SoapboxGarageInteractable : MonoBehaviour, IInteractable
             return;
         }
 
+        if (progress.TryInstallNextUpgrade(interactor.Inventory, out var message))
+        {
+            interactor.ShowMessage("Garage", message);
+            return;
+        }
+
         interactor.ShowMessage("Garage", progress.GetBuildSummary(interactor.Inventory));
     }
 }

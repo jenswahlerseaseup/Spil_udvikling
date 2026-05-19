@@ -112,7 +112,8 @@ public sealed class GameHud : MonoBehaviour
         var displayBest = Mathf.Max(bestDistance, distance);
         soapboxDistanceLabel.text = "Distance  " + Mathf.RoundToInt(distance) + " m  /  rekord " + Mathf.RoundToInt(displayBest) + " m";
         soapboxSpeedLabel.text = "Fart  " + Mathf.RoundToInt(speed * 10f) + " km/t";
-        soapboxStatsLabel.text = "Bil  top " + Mathf.RoundToInt(stats.topSpeed) +
+        soapboxStatsLabel.text = "Bil L" + stats.upgradeLevel +
+                                 "  top " + Mathf.RoundToInt(stats.topSpeed) +
                                  "  acc " + Mathf.RoundToInt(stats.acceleration) +
                                  "  stabilitet " + Mathf.RoundToInt(stats.stability * 10f);
     }

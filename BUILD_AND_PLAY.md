@@ -30,7 +30,7 @@ Buildet bliver lavet her:
 ## Saebekassebil Prototype
 
 1. Find dele rundt paa gaarden: traebraedder, hjul, aksel og lejer.
-2. Gaa til **Soapbox Garage** ved skuret for at se bilens status.
+2. Gaa til **Soapbox Garage** ved skuret og tryk **E** for at installere naeste mulige upgrade.
 3. Gaa til **Soapbox Start Ramp** ved sydvejen og tryk **E**.
 4. I side-view run: hold hoejre for fart, Shift for ekstra skub, og Space for at hoppe over bump. Maalet er at komme saa langt som muligt.
 5. Din bedste distance gemmes sammen med save-filen.

@@ -13,6 +13,10 @@ public sealed class SaveData
     public int    mischiefPoints;
     public float  soapboxBestDistance;
     public int    soapboxRunCount;
+    public int    soapboxFrameLevel;
+    public int    soapboxWheelLevel;
+    public int    soapboxBearingLevel;
+    public int    soapboxSteeringLevel;
     public float  playTimeSeconds;
     public string timestamp;
 

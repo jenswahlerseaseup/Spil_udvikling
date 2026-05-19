@@ -62,6 +62,10 @@ public sealed class SaveManager : Singleton<SaveManager>
             mischiefPoints = MischiefSystem.Instance?.Points ?? 0,
             soapboxBestDistance = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.BestDistance : 0f,
             soapboxRunCount = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.RunCount : 0,
+            soapboxFrameLevel = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.FrameLevel : 0,
+            soapboxWheelLevel = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.WheelLevel : 0,
+            soapboxBearingLevel = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.BearingLevel : 0,
+            soapboxSteeringLevel = SoapboxProgress.Instance != null ? SoapboxProgress.Instance.SteeringLevel : 0,
             playTimeSeconds = Time.realtimeSinceStartup,
             timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
             items = CaptureItems(player?.GetComponent<PlayerInventory>()),
@@ -195,7 +199,13 @@ public sealed class SaveManager : Singleton<SaveManager>
         }
 
         MischiefSystem.Instance?.LoadState(data.mischiefPoints);
-        SoapboxProgress.Instance?.LoadState(data.soapboxBestDistance, data.soapboxRunCount);
+        SoapboxProgress.Instance?.LoadState(
+            data.soapboxBestDistance,
+            data.soapboxRunCount,
+            data.soapboxFrameLevel,
+            data.soapboxWheelLevel,
+            data.soapboxBearingLevel,
+            data.soapboxSteeringLevel);
         QuestManager.Instance?.LoadSaveEntries(data.quests);
     }
 

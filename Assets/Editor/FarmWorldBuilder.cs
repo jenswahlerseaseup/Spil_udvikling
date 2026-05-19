@@ -828,10 +828,16 @@ public static class FarmWorldBuilder
         PlaceRunStarter(interactableRoot, layer, new Vector2(0f, -12.8f));
         PlaceSoapboxPart(interactableRoot, "Part_Plank_A", SoapboxPlankPath, "item_plank", new Vector2(-21f, -7.2f));
         PlaceSoapboxPart(interactableRoot, "Part_Plank_B", SoapboxPlankPath, "item_plank", new Vector2(8.2f, -2.6f));
+        PlaceSoapboxPart(interactableRoot, "Part_Plank_C", SoapboxPlankPath, "item_plank", new Vector2(13.8f, 6.4f));
         PlaceSoapboxPart(interactableRoot, "Part_Wheel_A", SoapboxWheelPath, "item_wheel", new Vector2(3.8f, -5.1f));
         PlaceSoapboxPart(interactableRoot, "Part_Wheel_B", SoapboxWheelPath, "item_wheel", new Vector2(17.2f, 1.8f));
+        PlaceSoapboxPart(interactableRoot, "Part_Wheel_C", SoapboxWheelPath, "item_wheel", new Vector2(-6.8f, 7.7f));
         PlaceSoapboxPart(interactableRoot, "Part_Axle", SoapboxAxlePath, "item_axle", new Vector2(-12.4f, 1.2f));
+        PlaceSoapboxPart(interactableRoot, "Part_Axle_B", SoapboxAxlePath, "item_axle", new Vector2(22.4f, -4.2f));
+        PlaceSoapboxPart(interactableRoot, "Part_Axle_C", SoapboxAxlePath, "item_axle", new Vector2(-17.7f, 8.4f));
         PlaceSoapboxPart(interactableRoot, "Part_Bearings", SoapboxBearingPath, "item_bearings", new Vector2(20.8f, 7.4f));
+        PlaceSoapboxPart(interactableRoot, "Part_Bearings_B", SoapboxBearingPath, "item_bearings", new Vector2(-2.1f, 11.1f));
+        PlaceSoapboxPart(interactableRoot, "Part_Bearings_C", SoapboxBearingPath, "item_bearings", new Vector2(6.9f, 9.8f));
 
         var runRoot = GetOrCreate("Soapbox Run");
         var solid = LayerMask.NameToLayer("Solid");
