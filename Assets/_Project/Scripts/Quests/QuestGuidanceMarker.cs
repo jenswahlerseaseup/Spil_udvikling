@@ -20,6 +20,7 @@ public sealed class QuestGuidanceMarker : MonoBehaviour
     [SerializeField] private string prerequisiteQuestId;
     [SerializeField] private QuestState prerequisiteStatus = QuestState.Completed;
     [SerializeField] private ShakeableTree linkedTree;
+    [SerializeField] private ChickenInteractable linkedChicken;
     [SerializeField, Min(0f)] private float bobHeight = 0.12f;
     [SerializeField, Min(0f)] private float bobSpeed = 2.4f;
 
@@ -61,8 +62,20 @@ public sealed class QuestGuidanceMarker : MonoBehaviour
         questId = newQuestId;
         visibilityRule = newRule;
         linkedTree = treeToTrack;
+        linkedChicken = null;
         prerequisiteQuestId = newPrerequisiteQuestId;
         prerequisiteStatus = newPrerequisiteStatus;
+        RefreshVisibility();
+    }
+
+    public void ConfigureChicken(string newQuestId, VisibilityRule newRule, ChickenInteractable chickenToTrack)
+    {
+        questId = newQuestId;
+        visibilityRule = newRule;
+        linkedTree = null;
+        linkedChicken = chickenToTrack;
+        prerequisiteQuestId = null;
+        prerequisiteStatus = QuestState.Completed;
         RefreshVisibility();
     }
 
@@ -85,6 +98,11 @@ public sealed class QuestGuidanceMarker : MonoBehaviour
         }
 
         if (linkedTree != null && linkedTree.HasBeenShaken)
+        {
+            return false;
+        }
+
+        if (linkedChicken != null && linkedChicken.HasBeenCaught)
         {
             return false;
         }

@@ -27,14 +27,23 @@ public sealed class PickupItem : MonoBehaviour
             return;
         }
 
+        var feedback = string.Empty;
         if (coins > 0)
         {
             inventory.AddCoins(coins);
+            feedback = "+" + coins + " moenter";
         }
 
         if (item != null)
         {
             inventory.AddItem(item, quantity);
+            feedback = "+" + quantity + " " + item.DisplayName;
+        }
+
+        if (!string.IsNullOrEmpty(feedback))
+        {
+            WorldFeedbackText.Spawn(transform.position + Vector3.up * 0.35f, feedback, new Color(1f, 0.9f, 0.45f));
+            GameHud.Instance?.ShowNotification(feedback, 1.2f);
         }
 
         Destroy(gameObject);

@@ -20,6 +20,7 @@ public sealed class BucketInteractable : MonoBehaviour, IInteractable
         tipped = true;
         transform.rotation = Quaternion.Euler(0f, 0f, tippedAngle);
         MischiefSystem.Instance?.AddMischief(mischiefAmount, mischiefReason);
+        WorldFeedbackText.Spawn(transform.position + Vector3.up * 0.45f, "+" + mischiefAmount + " ballade", new Color(0.85f, 0.55f, 1f));
         interactor.ShowMessage(string.Empty, $"Plask! (+{mischiefAmount} ballade)");
     }
 }

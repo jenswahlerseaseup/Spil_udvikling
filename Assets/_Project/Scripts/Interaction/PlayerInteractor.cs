@@ -24,6 +24,7 @@ public sealed class PlayerInteractor : MonoBehaviour
 
     private void Update()
     {
+        CleanupMissingInteractables();
         var current = CurrentInteractable;
         if (current == lastPrompted) return;
         lastPrompted = current;
@@ -41,8 +42,36 @@ public sealed class PlayerInteractor : MonoBehaviour
         GameHud.Instance?.ShowNotification(text);
     }
 
-    private IInteractable CurrentInteractable =>
-        nearbyInteractables.Count > 0 ? nearbyInteractables[0] : null;
+    private IInteractable CurrentInteractable
+    {
+        get
+        {
+            IInteractable best = null;
+            var bestScore = float.MaxValue;
+
+            foreach (var interactable in nearbyInteractables)
+            {
+                if (interactable == null || string.IsNullOrEmpty(interactable.InteractionPrompt))
+                {
+                    continue;
+                }
+
+                if (interactable is not Component component)
+                {
+                    continue;
+                }
+
+                var score = (component.transform.position - transform.position).sqrMagnitude;
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    best = interactable;
+                }
+            }
+
+            return best;
+        }
+    }
 
     private void Interact()
     {
@@ -74,6 +103,18 @@ public sealed class PlayerInteractor : MonoBehaviour
             {
                 lastPrompted = null;
                 GameHud.Instance?.ShowInteractionPrompt(null);
+            }
+        }
+    }
+
+    private void CleanupMissingInteractables()
+    {
+        for (var i = nearbyInteractables.Count - 1; i >= 0; i--)
+        {
+            if (nearbyInteractables[i] == null ||
+                nearbyInteractables[i] is Component component && component == null)
+            {
+                nearbyInteractables.RemoveAt(i);
             }
         }
     }

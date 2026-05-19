@@ -9,6 +9,8 @@ public sealed class ChickenInteractable : MonoBehaviour, IInteractable
     private bool caught;
     private bool isSubscribedToQuestUpdates;
 
+    public bool HasBeenCaught => caught;
+
     public string InteractionPrompt => caught ? string.Empty : "Fang";
 
     private void OnEnable()
@@ -68,7 +70,11 @@ public sealed class ChickenInteractable : MonoBehaviour, IInteractable
             MischiefSystem.Instance?.AddMischief(mischiefOnCatch, "Caught a chicken in a chaotic way");
         }
 
-        interactor.ShowMessage(string.Empty, "Fanget!");
+        var progress = questManager.IsReadyToComplete(questId)
+            ? "Alle hoens er fanget. Tilbage til gaardejeren!"
+            : "Hoene fanget!";
+        WorldFeedbackText.Spawn(transform.position + Vector3.up * 0.65f, "Fanget!", new Color(1f, 0.95f, 0.55f));
+        interactor.ShowMessage(string.Empty, progress);
         gameObject.SetActive(false);
     }
 

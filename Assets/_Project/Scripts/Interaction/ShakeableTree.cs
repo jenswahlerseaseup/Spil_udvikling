@@ -48,6 +48,7 @@ public sealed class ShakeableTree : MonoBehaviour, IInteractable
         var progressText = qm.IsReadyToComplete(questId)
             ? "Vend tilbage til gaardejeren."
             : "(" + caught + " / 3)";
+        WorldFeedbackText.Spawn(transform.position + Vector3.up * 0.9f, "+Aeble", new Color(1f, 0.72f, 0.48f));
         interactor.ShowMessage(string.Empty, "Pluds! Et aeble falder ned. " + progressText);
 
         if (mischiefOnShake > 0)

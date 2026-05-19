@@ -811,9 +811,47 @@ public static class FarmWorldBuilder
             "apple_harvest", QuestGuidanceMarker.VisibilityRule.WhenQuestReadyToComplete, null,
             new Color(0.7f, 1f, 0.65f));
 
+        AddChickenMarker("Chicken A");
+        AddChickenMarker("Chicken B");
+        AddChickenMarker("Chicken C");
+
         AddTreeMarker(root, "Marker_AppleTree_A", "AppleTree_A", new Vector2(-20f, 6.1f));
         AddTreeMarker(root, "Marker_AppleTree_B", "AppleTree_B", new Vector2(-16f, 10.1f));
         AddTreeMarker(root, "Marker_AppleTree_C", "AppleTree_C", new Vector2(-20f, 13.1f));
+    }
+
+    private static void AddChickenMarker(string chickenName)
+    {
+        var chickenGo = GameObject.Find(chickenName);
+        var chicken = chickenGo != null ? chickenGo.GetComponent<ChickenInteractable>() : null;
+        if (chickenGo == null || chicken == null)
+        {
+            return;
+        }
+
+        RemoveChildIfExists(chickenGo.transform, "Quest Marker");
+
+        var go = new GameObject("Quest Marker");
+        go.transform.SetParent(chickenGo.transform);
+        go.transform.localPosition = new Vector3(0f, 0.95f, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = LoadSprite("ui_quest_marker");
+        sr.sortingOrder = 9000;
+        sr.color = new Color(1f, 0.82f, 0.45f);
+
+        var marker = go.AddComponent<QuestGuidanceMarker>();
+        marker.ConfigureChicken("collect_chickens",
+            QuestGuidanceMarker.VisibilityRule.WhenQuestActiveAndIncomplete, chicken);
+    }
+
+    private static void RemoveChildIfExists(Transform parent, string childName)
+    {
+        var child = parent.Find(childName);
+        if (child != null)
+        {
+            Undo.DestroyObjectImmediate(child.gameObject);
+        }
     }
 
     private static void AddTreeMarker(Transform parent, string markerName, string treeName, Vector2 position)
