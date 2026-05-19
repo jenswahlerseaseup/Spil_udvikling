@@ -41,6 +41,7 @@ public static class InitialGameplaySceneBuilder
     private const string HearthTeaPath = "Assets/_Project/ScriptableObjects/Items/HearthTea.asset";
     private const string LanternQuestPath = "Assets/_Project/ScriptableObjects/Quests/LanternErrand.asset";
     private const string ChickenQuestPath = "Assets/_Project/ScriptableObjects/Quests/CollectChickens.asset";
+    private const string AppleQuestPath   = "Assets/_Project/ScriptableObjects/Quests/AppleHarvest.asset";
     private const string AutoSetupSessionKey = "NytSpil.InitialGameplaySceneBuilder.AutoSetupQueued";
 
     [InitializeOnLoadMethod]
@@ -115,8 +116,9 @@ public static class InitialGameplaySceneBuilder
         var questManager = systems.AddComponent<QuestManager>();
         var questManagerObject = new SerializedObject(questManager);
         var quests = questManagerObject.FindProperty("allQuests");
-        quests.arraySize = 1;
+        quests.arraySize = 2;
         quests.GetArrayElementAtIndex(0).objectReferenceValue = AssetDatabase.LoadAssetAtPath<QuestDefinition>(ChickenQuestPath);
+        quests.GetArrayElementAtIndex(1).objectReferenceValue = AssetDatabase.LoadAssetAtPath<QuestDefinition>(AppleQuestPath);
         questManagerObject.ApplyModifiedPropertiesWithoutUndo();
 
         var saveManager = systems.AddComponent<SaveManager>();
@@ -159,6 +161,8 @@ public static class InitialGameplaySceneBuilder
         player.AddComponent<HealthSystem>();
         player.AddComponent<PlayerInventory>();
         player.AddComponent<PlayerInteractor>();
+        player.AddComponent<PauseMenu>();
+        player.AddComponent<InventoryPanel>();
         player.AddComponent<PlayerJump>();
         var attack = player.AddComponent<PlayerAttackController>();
 
@@ -434,8 +438,8 @@ public static class InitialGameplaySceneBuilder
 
     private static void CreateGameplayHud()
     {
-        var hud = new GameObject("Gameplay HUD");
-        hud.AddComponent<PrototypeHud>();
+        var hud = new GameObject("Game HUD");
+        hud.AddComponent<GameHud>();
     }
 
     private static void CreateSaveController(Transform player)

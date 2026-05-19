@@ -28,3 +28,6 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
 *.zip filter=lfs diff=lfs merge=lfs -text
+
+# Generated runtime sprites are small enough to keep directly in Git.
+Assets/_Project/Art/World/*.png -filter -diff -merge binary

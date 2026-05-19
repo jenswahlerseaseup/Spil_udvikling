@@ -12,6 +12,7 @@ public sealed class PlayerInputReader : MonoBehaviour
     public event Action InteractPressed;
     public event Action AttackPressed;
     public event Action PausePressed;
+    public event Action InventoryPressed;
     public event Action SavePressed;
     public event Action LoadPressed;
     public event Action JumpPressed;
@@ -46,10 +47,12 @@ public sealed class PlayerInputReader : MonoBehaviour
 
     public void OnPause(InputValue value)
     {
-        if (IsPressed(value))
-        {
-            PausePressed?.Invoke();
-        }
+        if (IsPressed(value)) PausePressed?.Invoke();
+    }
+
+    public void OnInventory(InputValue value)
+    {
+        if (IsPressed(value)) InventoryPressed?.Invoke();
     }
 
     public void OnSave(InputValue value)

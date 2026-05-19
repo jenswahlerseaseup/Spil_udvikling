@@ -37,6 +37,11 @@ public sealed class PlayerAttackController : MonoBehaviour
 
     private void Attack()
     {
+        if (!GameManager.CanPlayerAct)
+        {
+            return;
+        }
+
         if (Time.time < nextAttackTime)
         {
             return;

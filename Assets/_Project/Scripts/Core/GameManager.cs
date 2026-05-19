@@ -1,18 +1,41 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public sealed class GameManager : Singleton<GameManager>
 {
-    // True whenever the player can act (move, interact, attack).
-    // Systems that block input (dialogue, cutscenes) set their own flags here.
+    public event Action<bool> PauseChanged;
+
+    public bool IsPaused { get; private set; }
+
     public static bool CanPlayerAct =>
-        Instance == null || !DialogueManager.IsDialogueOpen;
+        (Instance == null || !Instance.IsPaused) && !DialogueManager.IsDialogueOpen;
 
-    public void LoadScene(string sceneName) =>
+    // ── Pause ──────────────────────────────────────────────────────────────────
+
+    public void SetPaused(bool paused)
+    {
+        if (IsPaused == paused) return;
+        IsPaused          = paused;
+        Time.timeScale    = paused ? 0f : 1f;
+        PauseChanged?.Invoke(paused);
+    }
+
+    public void TogglePause() => SetPaused(!IsPaused);
+
+    // ── Scene ─────────────────────────────────────────────────────────────────
+
+    public void LoadScene(string sceneName)
+    {
+        SetPaused(false);
         SceneManager.LoadScene(sceneName);
+    }
 
-    public void GoToMainMenu() =>
+    public void GoToMainMenu()
+    {
+        SetPaused(false);
         SceneManager.LoadScene(SceneNames.MainMenu);
+    }
 
     public void QuitGame()
     {
