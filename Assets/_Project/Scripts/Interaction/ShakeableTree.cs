@@ -16,6 +16,8 @@ public sealed class ShakeableTree : MonoBehaviour, IInteractable
 
     private bool shaken;
 
+    public bool HasBeenShaken => shaken;
+
     public string InteractionPrompt => shaken ? string.Empty : "Ryst";
 
     public void Interact(PlayerInteractor interactor)

@@ -29,13 +29,14 @@ public static class FarmWorldBuilder
 
     // ── Generated root names — used by both builder and cleanup ───────────────
     private static readonly string[] GeneratedRoots =
-        { "Environment", "Interactables", "NPCs", "Farm Visual Dressing" };
+        { "Environment", "Interactables", "NPCs", "Quest Guidance", "Farm Visual Dressing" };
 
     [MenuItem("Tools/World/Build Farm World")]
     public static void BuildFarmWorld()
     {
         EnsureFolders();
         GenerateSprites();
+        EnsureQuestMarkerSprite();
         ConfigureWorldSpriteImporters();
         EnsureAppleItem();
         EnsureAppleHarvestQuest();
@@ -59,6 +60,7 @@ public static class FarmWorldBuilder
         PlaceMischiefProps();
         PlaceExtraNPCs();
         RepositionGameElements();
+        BuildQuestGuidance();
         WireAppleQuestToFarmer();
         WireAppleQuestToQuestManager();
         PlaceGameHud();
@@ -77,6 +79,7 @@ public static class FarmWorldBuilder
     public static void PatchSceneComponents()
     {
         EnsureFolders();
+        EnsureQuestMarkerSprite();
         EnsureAppleItem();
         EnsureAppleHarvestQuest();
 
@@ -106,6 +109,43 @@ public static class FarmWorldBuilder
     // -------------------------------------------------------------------------
     // Apple harvest quest
     // -------------------------------------------------------------------------
+
+    private static void EnsureQuestMarkerSprite()
+    {
+        var path = SpriteFolder + "ui_quest_marker.png";
+        if (File.Exists(path))
+        {
+            return;
+        }
+
+        var tex = new Texture2D(16, 16, TextureFormat.RGBA32, false);
+        tex.filterMode = FilterMode.Point;
+        var clear = new Color32(0, 0, 0, 0);
+        for (var y = 0; y < 16; y++)
+            for (var x = 0; x < 16; x++)
+                tex.SetPixel(x, y, clear);
+
+        var outline = new Color32(76, 45, 24, 255);
+        var gold = new Color32(255, 218, 91, 255);
+        var light = new Color32(255, 246, 157, 255);
+
+        for (var y = 2; y <= 13; y++)
+            for (var x = 3; x <= 12; x++)
+            {
+                var dx = Mathf.Abs(x - 8);
+                var width = y < 8 ? y - 1 : 15 - y;
+                if (dx <= width * 0.55f)
+                {
+                    var edge = dx >= width * 0.55f - 1f || y == 2 || y == 13;
+                    tex.SetPixel(x, y, edge ? outline : gold);
+                }
+            }
+
+        tex.SetPixel(7, 9, light);
+        tex.SetPixel(8, 10, light);
+        tex.Apply();
+        WriteSprite(path, tex, 16f);
+    }
 
     private static void EnsureAppleItem()
     {
@@ -749,6 +789,56 @@ public static class FarmWorldBuilder
         {
             AddYSort(renderer, dynamicSort, footOffsetY);
         }
+    }
+
+    private static void BuildQuestGuidance()
+    {
+        var root = GetOrCreate("Quest Guidance");
+
+        AddMarker(root, "Marker_Farmer_Start", new Vector2(3f, 0.45f),
+            "collect_chickens", QuestGuidanceMarker.VisibilityRule.WhenQuestNotStarted, null,
+            Color.white);
+
+        AddMarker(root, "Marker_Farmer_ChickenReturn", new Vector2(3f, 0.45f),
+            "collect_chickens", QuestGuidanceMarker.VisibilityRule.WhenQuestReadyToComplete, null,
+            new Color(0.7f, 1f, 0.65f));
+
+        AddMarker(root, "Marker_Farmer_AppleOffer", new Vector2(3f, 0.45f),
+            "apple_harvest", QuestGuidanceMarker.VisibilityRule.WhenQuestNotStarted, null,
+            Color.white, "collect_chickens", QuestState.Completed);
+
+        AddMarker(root, "Marker_Farmer_AppleReturn", new Vector2(3f, 0.45f),
+            "apple_harvest", QuestGuidanceMarker.VisibilityRule.WhenQuestReadyToComplete, null,
+            new Color(0.7f, 1f, 0.65f));
+
+        AddTreeMarker(root, "Marker_AppleTree_A", "AppleTree_A", new Vector2(-20f, 6.1f));
+        AddTreeMarker(root, "Marker_AppleTree_B", "AppleTree_B", new Vector2(-16f, 10.1f));
+        AddTreeMarker(root, "Marker_AppleTree_C", "AppleTree_C", new Vector2(-20f, 13.1f));
+    }
+
+    private static void AddTreeMarker(Transform parent, string markerName, string treeName, Vector2 position)
+    {
+        var tree = GameObject.Find(treeName)?.GetComponent<ShakeableTree>();
+        AddMarker(parent, markerName, position, "apple_harvest",
+            QuestGuidanceMarker.VisibilityRule.WhenQuestActiveAndIncomplete, tree,
+            new Color(1f, 0.82f, 0.45f));
+    }
+
+    private static void AddMarker(Transform parent, string name, Vector2 position, string questId,
+        QuestGuidanceMarker.VisibilityRule rule, ShakeableTree linkedTree, Color tint,
+        string prerequisiteQuestId = null, QuestState prerequisiteStatus = QuestState.Completed)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent);
+        go.transform.position = new Vector3(position.x, position.y, 0f);
+
+        var sr = go.AddComponent<SpriteRenderer>();
+        sr.sprite = LoadSprite("ui_quest_marker");
+        sr.sortingOrder = 9000;
+        sr.color = tint;
+
+        var marker = go.AddComponent<QuestGuidanceMarker>();
+        marker.Configure(questId, rule, linkedTree, prerequisiteQuestId, prerequisiteStatus);
     }
 
     private static void MoveGameObject(string name, Vector3 position)

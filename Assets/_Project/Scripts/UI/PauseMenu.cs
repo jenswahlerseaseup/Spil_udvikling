@@ -39,6 +39,7 @@ public sealed class PauseMenu : MonoBehaviour
 
     private void BuildOverlay()
     {
+        var font     = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
         var canvasGo = new GameObject("Pause Canvas");
 
         var canvas = canvasGo.AddComponent<Canvas>();
@@ -71,7 +72,7 @@ public sealed class PauseMenu : MonoBehaviour
 
         // Title
         MakeTMP(card, "Title", "PAUSE", new Vector2(0, -24), new Vector2(360, 48), 36,
-            new Color(0.95f, 0.88f, 0.62f), TextAlignmentOptions.Center);
+            new Color(0.95f, 0.88f, 0.62f), TextAlignmentOptions.Center, font);
 
         // Separator line
         var sep = MakeAnchoredChild(card, "Sep",
@@ -80,14 +81,14 @@ public sealed class PauseMenu : MonoBehaviour
         sep.gameObject.AddComponent<Image>().color = new Color(0.4f, 0.38f, 0.32f, 0.8f);
 
         // Buttons
-        MakeButton(card, "Resume",        "Forsaet spil",     new Vector2(0, -128), () => GameManager.Instance?.SetPaused(false));
-        MakeButton(card, "Save",          "Gem (F5)",         new Vector2(0, -184), OnSave);
-        MakeButton(card, "MainMenu",      "Til startmenu",    new Vector2(0, -240), () => GameManager.Instance?.GoToMainMenu());
-        MakeButton(card, "Quit",          "Afslut spil",      new Vector2(0, -296), () => GameManager.Instance?.QuitGame());
+        MakeButton(card, "Resume",   "Forsaet spil",  new Vector2(0, -128), () => GameManager.Instance?.SetPaused(false), font);
+        MakeButton(card, "Save",     "Gem (F5)",      new Vector2(0, -184), OnSave, font);
+        MakeButton(card, "MainMenu", "Til startmenu", new Vector2(0, -240), () => GameManager.Instance?.GoToMainMenu(), font);
+        MakeButton(card, "Quit",     "Afslut spil",   new Vector2(0, -296), () => GameManager.Instance?.QuitGame(), font);
 
         // Hint at bottom
         MakeTMP(card, "Hint", "ESC — Forsaet", new Vector2(0, -328), new Vector2(360, 24), 15,
-            new Color(0.55f, 0.55f, 0.55f), TextAlignmentOptions.Center);
+            new Color(0.55f, 0.55f, 0.55f), TextAlignmentOptions.Center, font);
 
         overlayRoot = canvasGo;
         overlayRoot.SetActive(false);
@@ -128,7 +129,8 @@ public sealed class PauseMenu : MonoBehaviour
     }
 
     private static void MakeTMP(RectTransform parent, string name, string text,
-        Vector2 anchoredPos, Vector2 size, int fontSize, Color color, TextAlignmentOptions align)
+        Vector2 anchoredPos, Vector2 size, int fontSize, Color color, TextAlignmentOptions align,
+        TMP_FontAsset font)
     {
         var rt  = MakeAnchoredChild(parent, name, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), anchoredPos, size);
         var tmp = rt.gameObject.AddComponent<TextMeshProUGUI>();
@@ -136,11 +138,12 @@ public sealed class PauseMenu : MonoBehaviour
         tmp.fontSize  = fontSize;
         tmp.color     = color;
         tmp.alignment = align;
+        if (font != null) tmp.font = font;
         tmp.textWrappingMode = TextWrappingModes.NoWrap;
     }
 
     private static void MakeButton(RectTransform parent, string name, string label,
-        Vector2 anchoredPos, UnityEngine.Events.UnityAction action)
+        Vector2 anchoredPos, UnityEngine.Events.UnityAction action, TMP_FontAsset font)
     {
         var rt  = MakeAnchoredChild(parent, name, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), anchoredPos, new Vector2(300, 44));
         var img = rt.gameObject.AddComponent<Image>();
@@ -160,6 +163,7 @@ public sealed class PauseMenu : MonoBehaviour
         tmp.fontSize  = 22;
         tmp.color     = new Color(0.90f, 0.92f, 0.88f);
         tmp.alignment = TextAlignmentOptions.Center;
+        if (font != null) tmp.font = font;
         tmp.textWrappingMode = TextWrappingModes.NoWrap;
     }
 

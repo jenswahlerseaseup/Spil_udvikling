@@ -111,14 +111,14 @@ public sealed class GameHud : MonoBehaviour
     private static (string title, string progress) GetBestActiveQuest(QuestManager qm)
     {
         var found = TryQuestDisplay(qm, "collect_chickens", "Fang hoensene",
-            d => "Fang hoens:  " + d.StepProgress + " / 3");
+            d => "Find hoens rundt paa gaarden:  " + d.StepProgress + " / 3");
         if (found.HasValue) return found.Value;
 
         found = TryQuestDisplay(qm, "apple_harvest", "Aebletrae-hoest",
-            d => "Ryst trae:  " + d.StepProgress + " / 3");
+            d => "Ryst markerede trae i frugtskoven:  " + d.StepProgress + " / 3");
         if (found.HasValue) return found.Value;
 
-        return ("Emil paa gaarden", "Tal med gaardejeren");
+        return ("Emil paa gaarden", "Foelg markoeren og tal med gaardejeren");
     }
 
     private static (string, string)? TryQuestDisplay(QuestManager qm, string id,
@@ -177,6 +177,7 @@ public sealed class GameHud : MonoBehaviour
 
     private void BuildCanvas()
     {
+        var font = Resources.Load<TMP_FontAsset>("Fonts & Materials/LiberationSans SDF");
         var root = MakeCanvasRoot();
 
         // ── Stats — top-left ──────────────────────────────────────────────────
@@ -185,9 +186,9 @@ public sealed class GameHud : MonoBehaviour
             new Vector2(12, -12), new Vector2(252, 86),
             new Color(0f, 0f, 0f, 0.48f));
 
-        hpLabel       = MakeLabel(statsBg, "HP",       new Vector2(10, -8),  20, new Color(0.95f, 0.42f, 0.42f));
-        coinsLabel    = MakeLabel(statsBg, "Coins",    new Vector2(10, -34), 20, new Color(0.97f, 0.87f, 0.40f));
-        mischiefLabel = MakeLabel(statsBg, "Mischief", new Vector2(10, -60), 20, new Color(0.80f, 0.52f, 0.95f));
+        hpLabel       = MakeLabel(statsBg, "HP",       new Vector2(10, -8),  20, new Color(0.95f, 0.42f, 0.42f), font: font);
+        coinsLabel    = MakeLabel(statsBg, "Coins",    new Vector2(10, -34), 20, new Color(0.97f, 0.87f, 0.40f), font: font);
+        mischiefLabel = MakeLabel(statsBg, "Mischief", new Vector2(10, -60), 20, new Color(0.80f, 0.52f, 0.95f), font: font);
 
         // ── Quest — top-right ─────────────────────────────────────────────────
         var questBg = MakePanel(root, "Quest",
@@ -195,8 +196,8 @@ public sealed class GameHud : MonoBehaviour
             new Vector2(-12, -12), new Vector2(300, 64),
             new Color(0f, 0f, 0f, 0.48f));
 
-        questTitleLabel    = MakeLabel(questBg, "QTitle",    new Vector2(10, -8),  18, new Color(0.96f, 0.88f, 0.60f), TextAlignmentOptions.Right);
-        questProgressLabel = MakeLabel(questBg, "QProgress", new Vector2(10, -34), 16, new Color(0.70f, 0.88f, 0.68f), TextAlignmentOptions.Right);
+        questTitleLabel    = MakeLabel(questBg, "QTitle",    new Vector2(10, -8),  18, new Color(0.96f, 0.88f, 0.60f), TextAlignmentOptions.Right, font);
+        questProgressLabel = MakeLabel(questBg, "QProgress", new Vector2(10, -34), 16, new Color(0.70f, 0.88f, 0.68f), TextAlignmentOptions.Right, font);
 
         // Width fills parent minus side padding
         SetLabelWidth(questTitleLabel,    280);
@@ -209,7 +210,7 @@ public sealed class GameHud : MonoBehaviour
             new Color(0f, 0f, 0f, 0.52f));
 
         interactionPromptLabel = MakeLabel(promptBg, "PromptText", new Vector2(0, -8), 22,
-            new Color(0.92f, 0.96f, 0.80f), TextAlignmentOptions.Center);
+            new Color(0.92f, 0.96f, 0.80f), TextAlignmentOptions.Center, font);
         SetLabelWidth(interactionPromptLabel, 520);
         promptBg.gameObject.SetActive(false);
 
@@ -221,7 +222,7 @@ public sealed class GameHud : MonoBehaviour
 
         notificationGroup = notifBg.gameObject.AddComponent<CanvasGroup>();
         notificationLabel = MakeLabel(notifBg, "NotifText", new Vector2(0, -10), 24,
-            new Color(1f, 1f, 1f, 1f), TextAlignmentOptions.Center);
+            new Color(1f, 1f, 1f, 1f), TextAlignmentOptions.Center, font);
         SetLabelWidth(notificationLabel, 620);
         notifBg.gameObject.SetActive(false);
     }
@@ -271,7 +272,8 @@ public sealed class GameHud : MonoBehaviour
     }
 
     private static TextMeshProUGUI MakeLabel(RectTransform parent, string name, Vector2 topLeftOffset,
-        int fontSize, Color color, TextAlignmentOptions alignment = TextAlignmentOptions.Left)
+        int fontSize, Color color, TextAlignmentOptions alignment = TextAlignmentOptions.Left,
+        TMP_FontAsset font = null)
     {
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
@@ -289,6 +291,7 @@ public sealed class GameHud : MonoBehaviour
         tmp.color            = color;
         tmp.textWrappingMode = TextWrappingModes.NoWrap;
         tmp.overflowMode     = TextOverflowModes.Ellipsis;
+        if (font != null) tmp.font = font;
         return tmp;
     }
 

@@ -184,7 +184,11 @@ public sealed class SaveManager : Singleton<SaveManager>
         var player = FindPlayer();
         if (player != null)
         {
-            player.position = new Vector3(data.playerX, data.playerY, player.position.z);
+            var rb = player.GetComponent<Rigidbody2D>();
+            if (rb != null)
+                rb.position = new Vector2(data.playerX, data.playerY);
+            else
+                player.position = new Vector3(data.playerX, data.playerY, player.position.z);
             player.GetComponent<PlayerInventory>()?.LoadState(data.coins, RestoreItems(data.items));
         }
 
